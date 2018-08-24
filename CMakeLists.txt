@@ -1,0 +1,32 @@
+cmake_minimum_required(VERSION 3.7)
+project(test_qos)
+
+set(CMAKE_CXX_STANDARD 11)
+
+set(SOURCE_FILES
+        list_head.h
+        main.cpp
+        sysqos_interface.h
+        sysqos_token_reqgrp_manager.c
+        sysqos_token_reqgrp_manager.h
+        hash_table.c hash_table.h
+        memory_cache.c memory_cache.h
+        sysqos_alloc.c sysqos_alloc.h sysqos_common.h
+        safe_rw_list.c safe_rw_list.h
+        sysqos_container_item.h sysqos_test_lib.c
+        sysqos_test_lib.h sysqos_nodereq_list.c sysqos_nodereq_list.h
+        sysqos_policy_param.h sysqos_dispatch_base_node.c sysqos_dispatch_base_node.h
+        sysqos_protocol.h sysqos_token_reqgrp.c sysqos_token_reqgrp.h
+        sysqos_dispatch_node.c sysqos_dispatch_node.h
+        sysqos_dispatch_manager.c sysqos_dispatch_manager.h sysqos_token_global.c
+        sysqos_token_global.h sysqos_app_node.c sysqos_app_node.h
+        sysqos_token_update.c sysqos_token_update.h sysqos_update_node.c
+        sysqos_update_node.h
+        wait_increase_list.c wait_increase_list.h count_controller.c count_controller.h fence_executor.c fence_executor.h)
+
+add_executable(test_qos ${SOURCE_FILES})
+target_link_libraries(test_qos pthread)
+
+
+add_executable(test1 test.cpp)
+target_link_libraries(test1 pthread)
