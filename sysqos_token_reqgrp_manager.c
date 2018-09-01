@@ -147,7 +147,7 @@ static void node_online(struct msg_event_ops *ops, void *id)
     }
     
     atd.press.val = 0;
-    atd.ver       = 0;
+    atd.version       = 0;
     
     pthread_rwlock_wrlock(&manager->lck);
     do
@@ -670,15 +670,15 @@ static void test_check_snd_buf_legal(token_reqgrp_manager_t *manager,
                                                        container_item->id,
                                                        sizeof(app2dispatch_t),
                                                        (unsigned char *) &atd));
-            if ( atd.alloced != alloced )
+            if ( atd.token_in_use != alloced )
             {
-                assert(atd.alloced == alloced);
+                assert(atd.token_in_use == alloced);
             }
             if ( version >= 0 )
             {
-                assert(atd.ver == version);
+                assert(atd.version == version);
             }
-            assert(atd.alloced == alloced);
+            assert(atd.token_in_use == alloced);
             assert(atd.press.fifo.depth == press);
         }
     }
@@ -945,8 +945,8 @@ test_rcvd_increased(token_reqgrp_manager_t *manager, test_context_t *test)
         int                      err      = manager->app_node_table
                 ->find(manager->app_node_table, (void *) id, ppitem);
         assert(err == 0);
-        dta.ver   = item->base_node.get_version(&item->base_node) + 1;
-        dta.total = MAX_QUEUE_NUM;
+        dta.version   = item->base_node.get_version(&item->base_node) + 1;
+        dta.token_quota = MAX_QUEUE_NUM;
         manager->msg_event
                 .rcvd(&manager->msg_event, (void *) id, sizeof(dispatch2app_t),
                       (unsigned char *) &dta);
@@ -966,8 +966,8 @@ test_rcvd_decreased(token_reqgrp_manager_t *manager, test_context_t *test)
         int                      err      = manager->app_node_table
                 ->find(manager->app_node_table, (void *) id, ppitem);
         assert(err == 0);
-        dta.ver   = item->base_node.get_version(&item->base_node) + 1;
-        dta.total = MIN_RS_NUM;
+        dta.version   = item->base_node.get_version(&item->base_node) + 1;
+        dta.token_quota = MIN_RS_NUM;
         manager->msg_event
                 .rcvd(&manager->msg_event, (void *) id, sizeof(dispatch2app_t),
                       (unsigned char *) &dta);
@@ -988,8 +988,8 @@ test_rcvd_reset(token_reqgrp_manager_t *manager, test_context_t *test)
                                                                (void *) id,
                                                                ppitem);
         assert(err == 0);
-        dta.ver   = 0;
-        dta.total = 0;
+        dta.version   = 0;
+        dta.token_quota = 0;
         manager->msg_event
                 .rcvd(&manager->msg_event, (void *) id, sizeof(dispatch2app_t),
                       (unsigned char *) &dta);

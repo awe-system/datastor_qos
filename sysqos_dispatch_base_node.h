@@ -17,7 +17,6 @@ typedef struct dispatch_base_node
 {
     unsigned long    token_inuse;
     unsigned long    token_quota;
-    //FIXME 新的部分增长 逻辑
     unsigned long    token_quota_new;
     unsigned long    respond_step;
     long             version;

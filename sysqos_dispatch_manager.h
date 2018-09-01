@@ -12,11 +12,9 @@
 #include "count_controller.h"
 #include "fence_executor.h"
 #include "sysqos_token_update.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 typedef struct sysqos_disp_manager
 {
     /*********************************************************************/
@@ -52,12 +50,12 @@ typedef struct sysqos_disp_manager
     unsigned long      fence_id;
     count_controller_t cnt_controller;
     fence_executor_t   executor;
-    token_update_ctx_t update_ctx;
+    struct token_update_ctx update_ctx;
 } sysqos_disp_manager_t;
 
 int sysqos_disp_manager_init(sysqos_disp_manager_t *manager, int table_len,
                              unsigned long max_node_num, int update_interval,
-                             unsigned long min_rs_num, unsigned long max_grp);
+                             unsigned long min_rs_num, int rebalance_ratio);
 
 void sysqos_disp_manager_exit(sysqos_disp_manager_t *manager);
 

@@ -21,16 +21,17 @@ typedef struct wait_increase_list
     /**public********************************/
     void (*erase)(struct wait_increase_list *, struct app_node *node);
     
-    void (*enqueue)(struct wait_increase_list *, struct app_node *node);
+    void (*insert)(struct wait_increase_list *, struct app_node *node);
     
     bool (*is_first_exist)(struct wait_increase_list *, struct app_node **node);
     
-    void (*dequeue)(struct wait_increase_list *);
     
     /**private*******************************/
     memory_cache_t   cache;
     struct list_head head;
     struct list_head left;
+    //for test
+    void (*dequeue)(struct wait_increase_list *);
 } wait_increase_list_t;
 
 int

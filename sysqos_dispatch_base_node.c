@@ -138,9 +138,9 @@ static unsigned long get_alloced(dispatch_base_node_t *desc)
 static void reset(struct dispatch_base_node *desc)
 {
     pthread_rwlock_wrlock(&desc->lck);
-    desc->token_quota = MIN_RS_NUM;
+    desc->token_quota     = MIN_RS_NUM;
     desc->token_quota_new = MIN_RS_NUM;
-    desc->version     = 0;
+    desc->version         = 0;
     pthread_rwlock_unlock(&desc->lck);
 }
 
@@ -302,9 +302,9 @@ disp_desc_manager_by_msg_event(struct msg_event_ops *ops)
 
 static void node_online(struct msg_event_ops *ops, void *id)
 {
-    disp_desc_manager_t *manager = disp_desc_manager_by_msg_event(ops);
-    int                 err      = QOS_ERROR_OK;
-    dispatch_base_node_t     *desc    = manager->cache.alloc(&manager->cache);
+    disp_desc_manager_t  *manager = disp_desc_manager_by_msg_event(ops);
+    int                  err      = QOS_ERROR_OK;
+    dispatch_base_node_t *desc    = manager->cache.alloc(&manager->cache);
     assert(desc);
     err = dispatch_base_node_init(desc);
     assert(err == 0);
@@ -374,8 +374,9 @@ rcvd(struct msg_event_ops *ops, void *id, long len, unsigned char *buf)
         }
         
         is_resource_increased =
-                check_update_total_version((dispatch_base_node_t *) desc, app.total,
-                                           app.ver, &is_reset);
+                check_update_total_version((dispatch_base_node_t *) desc,
+                                           app.token_quota,
+                                           app.version, &is_reset);
     } while ( 0 );
     pthread_rwlock_unlock(&manager->lck);
     if ( is_reset )
@@ -509,8 +510,8 @@ static void test_case_regular_online_offline(disp_desc_manager_t *manager)
 static void test_case_regular_rcvd(disp_desc_manager_t *manager)
 {
     dispatch2app_t dta;
-    dta.ver   = 1;
-    dta.total = FIRST_TOTAL;
+    dta.version     = 1;
+    dta.token_quota = FIRST_TOTAL;
     manager->msg_event
             .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
                   (unsigned char *) &dta);
@@ -519,7 +520,7 @@ static void test_case_regular_rcvd(disp_desc_manager_t *manager)
     manager->msg_event
             .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
                   (unsigned char *) &dta);
-    assert(manager->get_currentversion(manager, (void *) 1) == dta.ver);
+    assert(manager->get_currentversion(manager, (void *) 1) == dta.version);
     manager->msg_event.node_offline(&manager->msg_event, (void *) 1);
 #ifdef CACHE_OPEN_CNT
     assert(manager->cache.alloc_cnt == manager->cache.free_cnt);
@@ -536,8 +537,8 @@ static void test_case_regular_rcvd_reduce(disp_desc_manager_t *manager)
     int            err      = 0;
     void           *desc;
     dispatch2app_t dta;
-    dta.ver   = 1;
-    dta.total = FIRST_TOTAL;
+    dta.version     = 1;
+    dta.token_quota = FIRST_TOTAL;
     is_increased = false;
     manager->msg_event.node_online(&manager->msg_event, (void *) 1);
     manager->msg_event
@@ -557,8 +558,8 @@ static void test_case_regular_rcvd_reduce(disp_desc_manager_t *manager)
         assert(err == 0);
         left_len -= rs.cost;
     }
-    dta.ver   = 2;
-    dta.total = FIRST_TOTAL / 2;
+    dta.version     = 2;
+    dta.token_quota = FIRST_TOTAL / 2;
     is_increased = false;
     manager->msg_event
             .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
@@ -623,8 +624,8 @@ static void test_case_regular_reset(disp_desc_manager_t *manager)
     int            err      = 0;
     void           *desc;
     dispatch2app_t dta;
-    dta.ver   = 1;
-    dta.total = FIRST_TOTAL;
+    dta.version     = 1;
+    dta.token_quota = FIRST_TOTAL;
     is_increased = false;
     manager->msg_event.node_online(&manager->msg_event, (void *) 1);
     manager->msg_event
@@ -644,8 +645,8 @@ static void test_case_regular_reset(disp_desc_manager_t *manager)
         assert(err == 0);
         left_len -= rs.cost;
     }
-    dta.ver   = 0;
-    dta.total = FIRST_TOTAL / 2;
+    dta.version     = 0;
+    dta.token_quota = FIRST_TOTAL / 2;
     is_increased = false;
     manager->msg_event
             .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
@@ -709,8 +710,8 @@ static void test_case_regular_rcvd_increase(disp_desc_manager_t *manager)
     int            err      = 0;
     void           *desc;
     dispatch2app_t dta;
-    dta.ver   = 1;
-    dta.total = FIRST_TOTAL / 2;
+    dta.version     = 1;
+    dta.token_quota = FIRST_TOTAL / 2;
     is_increased = false;
     manager->msg_event.node_online(&manager->msg_event, (void *) 1);
     manager->msg_event
@@ -734,8 +735,8 @@ static void test_case_regular_rcvd_increase(disp_desc_manager_t *manager)
     err = try_alloc_resource(manager, &rs);
     assert(err != 0);
     
-    dta.ver   = 2;
-    dta.total = FIRST_TOTAL;
+    dta.version     = 2;
+    dta.token_quota = FIRST_TOTAL;
     is_increased = false;
     manager->msg_event
             .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
@@ -781,8 +782,8 @@ static void test_case_regular_alloc_free(disp_desc_manager_t *manager)
     int            err      = 0;
     void           *desc;
     dispatch2app_t dta;
-    dta.ver   = 1;
-    dta.total = FIRST_TOTAL;
+    dta.version     = 1;
+    dta.token_quota = FIRST_TOTAL;
     manager->msg_event.node_online(&manager->msg_event, (void *) 1);
     manager->msg_event
             .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
@@ -843,8 +844,8 @@ static void test_case_regular_check_free(disp_desc_manager_t *manager)
     int            err      = 0;
     void           *desc;
     dispatch2app_t dta;
-    dta.ver   = 1;
-    dta.total = FIRST_TOTAL;
+    dta.version     = 1;
+    dta.token_quota = FIRST_TOTAL;
     manager->msg_event.node_online(&manager->msg_event, (void *) 1);
     manager->msg_event
             .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
@@ -918,7 +919,7 @@ void test_dispatch_base_node()
     test_case_regular_alloc_free(&manager);
     
     test_case_regular_check_free(&manager);
-    
+
 //    test_case_regular_rcvd_reduce(&manager);
     
     test_case_regular_rcvd_increase(&manager);

@@ -2,8 +2,8 @@
 // Created by root on 18-8-11.
 //
 
-#ifndef _QOS_SYSQOS_POLICY_H
-#define _QOS_SYSQOS_POLICY_H
+#ifndef _QOS_SYSQOS_TOKEN_UPDATE_H
+#define _QOS_SYSQOS_TOKEN_UPDATE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,32 +12,37 @@ extern "C" {
 #include "list_head.h"
 #include "sysqos_common.h"
 #include "sysqos_interface.h"
-#include "sysqos_policy_param.h"
+#include "sysqos_app_node.h"
+#include "sysqos_token_global.h"
+#include "wait_increase_list.h"
 
-typedef void (*set_tototal_func)(void *manager, resource_t *rs);
+typedef unsigned long (*set_quota_new_func)(void *manager, unsigned long quota,
+                                   app_node_t *node);
 
+struct sysqos_disp_manager;
 typedef struct token_update_ctx
 {
-    unsigned long    token_left_min;
-    unsigned long    token_left;
-    unsigned long    max_token_once;
+    /**private**********************************/
+    unsigned long    total_weight;
+    unsigned long    token_total;
+    unsigned long    token_static;
+//    unsigned long    max_token_once;
+//    int              rebalance_ratio;
     struct list_head lhead_update_node;
+    pthread_rwlock_t lck;
     
-    void (*add_resource)(struct token_update_ctx *policy, resource_t *rs,
-                         unsigned long p_press, limit_t *p_limt);
+    /**public*****************************************/
+    void (*add_resource)(struct token_update_ctx *ctx, app_node_t *node);
     
-    void (*update)(struct token_update_ctx *policy);
-    
-    void (*for_each_do)(struct token_update_ctx *policy, void *manager,
-                        set_tototal_func func);
-    
-    void (*reset)(struct token_update_ctx *policy);
+    void (*update)(struct token_update_ctx *ctx,
+                   struct sysqos_disp_manager *manager,
+                   set_quota_new_func func);
 /**cache******************************/
 } token_update_ctx_t;
 
-int token_update_ctx_init(token_update_ctx_t *ctx,
-                          unsigned long max_node_num,
-                          unsigned long max_grp_num);
+int token_update_ctx_init(token_update_ctx_t *ctx/*,
+                          unsigned long max_token_once,
+                          int rebalance_ratio*/);
 
 
 void token_update_ctx_exit(token_update_ctx_t *ctx);

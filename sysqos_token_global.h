@@ -5,36 +5,43 @@
 #ifndef QOS_SYSQOS_DISP_LEFT_TOKENS_H
 #define QOS_SYSQOS_DISP_LEFT_TOKENS_H
 
+#include "sysqos_app_node.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct token_global
 {
-    unsigned long max_node_nr;
-    unsigned long min_per_node;
+    /**private****************************************************/
+    unsigned long default_token_min;
+    unsigned long token_total;
+    unsigned long token_free;
+    unsigned long token_used_static;
+    unsigned long token_dynamic;
+    unsigned long token_dynamic_new;
+    unsigned long app_token_rsvr;
+    unsigned long app_num_max;
+    unsigned long app_num_cur;
+    unsigned long app_max_token_rsvr;
+    pthread_spinlock_t lck;
+    /**public****************************************************/
+    //为node分配额外的空间
+    int (*online)(struct token_global *tokens, app_node_t *node);
     
-    int           online_nr;
-    unsigned long Total;
-    unsigned long Free;
-    unsigned long ToFree;
+    void (*offline)(struct token_global *tokens, app_node_t *node);
     
-    int (*try_online)(struct token_global *left_tokens);
+    unsigned long (*try_alloc)(struct token_global *tokens,
+                               unsigned long cost);
     
-    void (*offline)(struct token_global *left_tokens);
+    //cant del zero
+    void (*free)(struct token_global *tokens, unsigned long cost);
     
-    unsigned long (*try_alloc)(struct token_global *left_tokens,
-                     unsigned long cost);
+    void (*increase)(struct token_global *tokens, unsigned long units);
     
-    void (*free)(struct token_global *left_tokens, unsigned long cost);
+    bool (*try_decrease)(struct token_global *tokens, unsigned long units);
     
-    void (*increase)(struct token_global *left_tokens, unsigned long units);
-    
-    int (*try_decrease)(struct token_global *left_tokens,
-                        unsigned long units);
-    
-    unsigned long (*real_total)(struct token_global *left_tokens);
-    
+    void (*set_max_rsvr)(struct token_global *tokens, unsigned long max_rsvr);
 } token_global_t;
 
 int token_global_init(token_global_t *left_tokens,
@@ -42,6 +49,8 @@ int token_global_init(token_global_t *left_tokens,
                       unsigned long min_per_node);
 
 void token_global_exit(token_global_t *left_tokens);
+
+void test_token_global();
 
 #ifdef __cplusplus
 }

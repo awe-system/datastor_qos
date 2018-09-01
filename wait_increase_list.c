@@ -60,7 +60,7 @@ int wait_increase_list_init(wait_increase_list_t *q,
 {
     int err = 0, i = 0;
     
-    q->enqueue        = enqueue;
+    q->insert        = enqueue;
     q->dequeue        = dequeue;
     q->erase          = erase;
     q->is_first_exist = is_first_exist;
@@ -129,7 +129,7 @@ static void test_case_init_exit(wait_increase_list_t *q)
     printf("[test_case_init_exit] %s[OK]%s\n", GREEN, RESET);
 }
 
-static bool check_dequeue(wait_increase_list_t *q, test_context_t *test)
+static bool test_check_dequeue(wait_increase_list_t *q, test_context_t *test)
 {
     void *tmp_test = test_dequeue(test);
     assert(q && test);
@@ -160,27 +160,27 @@ static void test_case_endequeue(wait_increase_list_t *q)
     for ( i = 0; i < MAX_QUEUE_NUM; i++ )
     {
         long id = i + 1;
-//        item = q->enqueue(q, (void *) id);
+//        item = q->insert(q, (void *) id);
 //        assert(item->data == (void *) id);
         test_enqueue(&test, (void *) id);
     }
     
-    while ( check_dequeue(q, &test) );
+    while ( test_check_dequeue(q, &test) );
     
     
     for ( i = 0; i < MAX_QUEUE_NUM; i++ )
     {
         long id = i + 1;
-//        item = q->enqueue(q, (void *) id);
+//        item = q->insert(q, (void *) id);
 //        assert(item->data == (void *) id);
         test_enqueue(&test, (void *) id);
         if ( rand() % 2 == 0 )
         {
-            check_dequeue(q, &test);
+            test_check_dequeue(q, &test);
         }
     }
     
-    while ( check_dequeue(q, &test) );
+    while ( test_check_dequeue(q, &test) );
     
 //    assert(!q->is_first_exist(q, &tmp));
     printf("[test_case_endequeue] %s[OK]%s\n", GREEN, RESET);
@@ -197,9 +197,9 @@ static void test_case_enerasequeue(wait_increase_list_t *q)
 //    q_item_t       *item1 = NULL;
 //    q_item_t       *item2 = NULL;
     
-    q->enqueue(q, (void *) 1);
-    q->enqueue(q, (void *) 2);
-    q->enqueue(q, (void *) 2);
+    q->insert(q, (void *) 1);
+    q->insert(q, (void *) 2);
+    q->insert(q, (void *) 2);
 //
 //    q->erase(q,item2);
 //    q->erase(q,item1);
@@ -214,7 +214,7 @@ static void test_case_enerasequeue(wait_increase_list_t *q)
     for ( i = 0; i < MAX_QUEUE_NUM; i++ )
     {
         long id = i + 1;
-        q->enqueue(q, (void *) id);
+        q->insert(q, (void *) id);
 //        assert(item->data == (void *) id);
         test_enqueue(&test, (void *) id);
 //        test_enqueue(&test_item, item);

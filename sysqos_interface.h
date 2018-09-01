@@ -26,6 +26,7 @@ enum
     QOS_ERROR_TIMEOUT,
     QOS_ERROR_NOSUCHSOURCE,
     QOS_ERROR_MEMORY,
+    QOS_ERROR_TOO_MANY_NODES,
     QOS_ERROR_UNKNOWN = 99,
 };
 /*********************************************************************************/
@@ -40,7 +41,7 @@ typedef struct resource
     void *id;
     
     /*资源消耗值 只支持对等类型资源 只关心大小 不关心内容*/
-    long cost;
+    unsigned long cost;
 } resource_t;
 
 /*资源链表*/

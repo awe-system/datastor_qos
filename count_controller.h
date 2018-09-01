@@ -11,6 +11,10 @@ extern "C" {
 #endif
 typedef struct count_controller
 {
+    /**private:**/
+    int cnt;
+    int max;
+    /**public:**/
     bool (*test_cnt)(struct count_controller *);
     void (*clear)(struct count_controller *);
 }count_controller_t;
@@ -18,6 +22,8 @@ typedef struct count_controller
 int count_controller_init(count_controller_t *controller,int interval_cnt);
 
 void count_controller_exit(count_controller_t *controller);
+
+void test_count_controller();
 
 #ifdef __cplusplus
 }

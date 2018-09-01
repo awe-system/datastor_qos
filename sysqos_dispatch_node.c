@@ -62,7 +62,7 @@ static bool resource_changed(dispatch_node_t *item,
     bool is_reset = false;
     assert(item && dta && got_permission_list);
     bool is_increased = item->base_node
-            .check_update_quota_version(&item->base_node, dta->total, dta->ver,
+            .check_update_quota_version(&item->base_node, dta->token_quota, dta->version,
                                         &is_reset);
     if ( is_increased )
     {
@@ -131,8 +131,8 @@ static void get_protocol(struct dispatch_node *item,
                          app2dispatch_t *atd)
 {
     atd->press   = item->lhead_nodereq.get_press(&item->lhead_nodereq);
-    atd->ver     = item->base_node.get_version(&item->base_node);
-    atd->alloced = item->base_node.get_token_inuse(&item->base_node);
+    atd->version     = item->base_node.get_version(&item->base_node);
+    atd->token_in_use = item->base_node.get_token_inuse(&item->base_node);
 }
 
 static void pop_all(struct dispatch_node *item,
@@ -408,8 +408,8 @@ test_try_resource_changed(dispatch_node_t *item, long total,
     struct list_head got_list;
     LISTHEAD_INIT(&got_list);
     dispatch2app_t dta;
-    dta.ver   = version;
-    dta.total = total;
+    dta.version   = version;
+    dta.token_quota = total;
     
     if ( version < item->base_node.version )
     {
@@ -510,7 +510,7 @@ static void test_case_alloc_free_queue(dispatch_node_t *item)
     assert(alloc_success == MAX_PERMISSION_NUM_INTEST);
     item->reset(item);
     item->get_protocol(item, &atd);
-    assert(atd.press.fifo.depth == 0 && atd.ver == 0);
+    assert(atd.press.fifo.depth == 0 && atd.version == 0);
     
     test_for_permission_item_exit(&test);
     printf("[test_case_alloc_free_queue] %s[OK]%s\n", GREEN, RESET);
@@ -601,7 +601,7 @@ test_case_alloc_free_resource_changed_enough(dispatch_node_t *item)
             test_try_resource_changed(item, MAX_PERMISSION_NUM_INTEST * 2,
                                       test_version++);
     item->get_protocol(item, &atd);
-    assert(atd.press.val == 0 && atd.ver == test_version - 1);
+    assert(atd.press.val == 0 && atd.version == test_version - 1);
     item->reset(item);
     assert(alloc_success == MAX_PERMISSION_NUM_INTEST);
     test_try_free(item, &test, MAX_PERMISSION_NUM_INTEST * 2);
