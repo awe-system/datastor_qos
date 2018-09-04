@@ -14,7 +14,7 @@ extern "C" {
 #include "sysqos_interface.h"
 #include "sysqos_app_node.h"
 #include "sysqos_token_global.h"
-#include "wait_increase_list.h"
+#include "sysqos_waitincrease_list.h"
 
 typedef unsigned long (*set_quota_new_func)(void *manager, unsigned long quota,
                                    app_node_t *node);

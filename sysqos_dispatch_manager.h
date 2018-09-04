@@ -7,7 +7,7 @@
 
 #include "sysqos_interface.h"
 #include "hash_table.h"
-#include "wait_increase_list.h"
+#include "sysqos_waitincrease_list.h"
 #include "sysqos_token_global.h"
 #include "count_controller.h"
 #include "fence_executor.h"

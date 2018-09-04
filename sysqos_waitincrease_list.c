@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <memory.h>
 #include <stdlib.h>
-#include "wait_increase_list.h"
+#include "sysqos_waitincrease_list.h"
 #include "sysqos_common.h"
 #include "sysqos_interface.h"
 
