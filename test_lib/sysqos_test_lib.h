@@ -22,6 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #define MAX_TEST_THREAD_PER_TYPE  1024
 #define MAX_TEST_TRHEAD_TYPE      10204
 
@@ -197,7 +198,6 @@ static inline int test_hash(void *id, int tab_len)
     res = (res + tab_len) % tab_len;
     return res;
 }
-
 
 #ifdef __cplusplus
 }
