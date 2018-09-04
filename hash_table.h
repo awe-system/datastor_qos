@@ -18,13 +18,12 @@
 extern "C" {
 #endif
 
-enum
-{
-    hash_table_error_ok,
-    hash_table_error_exist,
-    hash_table_error_notfound,
-};
-
+//enum
+//{
+//    hash_table_error_ok,
+//    hash_table_error_exist,
+//    hash_table_error_notfound,
+//};
 
 typedef struct hash_table
 {
@@ -54,8 +53,6 @@ typedef struct hash_table
 hash_table_t *alloc_hash_table(int table_len, unsigned long item_num);
 
 void free_hash_table(hash_table_t *tab);
-
-void test_hash_table();
 
 #ifdef __cplusplus
 }

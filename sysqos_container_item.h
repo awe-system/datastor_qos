@@ -21,6 +21,7 @@ typedef struct sysqos_container_item
 static inline void
 qos_container_item_init(qos_container_item_t *item, void *id, void *pri)
 {
+    assert(item);
     item->id  = id;
     item->pri = pri;
     LISTHEAD_INIT(&item->list);

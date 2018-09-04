@@ -11,6 +11,7 @@
 #include "sysqos_dispatch_node.h"
 #include "sysqos_token_reqgrp_manager.h"
 #include "test_rw_list.h"
+#include "test_hashtab.h"
 
 
 int main(int argc, char *argv)
@@ -22,6 +23,8 @@ int main(int argc, char *argv)
     memory_cache_suit_init(&frame);
     
     safe_rw_suit_init(&frame);
+    
+    hashtab_suit_init(&frame);
     
     frame.run(&frame);
     

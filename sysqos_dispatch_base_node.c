@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include "sysqos_dispatch_base_node.h"
 #include "sysqos_protocol.h"
-#include "sysqos_interface.h"
+//#include "sysqos_interface.h"
 #include "sysqos_test_lib.h"
 
 static inline bool is_to_reset(dispatch_base_node_t *desc, long new_ver)
@@ -181,10 +181,10 @@ typedef struct disp_desc_manager
     pthread_rwlock_t          lck;
     /******************************************************************************/
     msg_event_ops_t           msg_event;//NOTE:此对象之实现online,offline,rcvd
-    
-    int
-    (*check_alloc_resource)(struct disp_desc_manager *manager, resource_t *rs);
-    
+//
+//    int
+//    (*check_alloc_resource)(struct disp_desc_manager *manager, resource_t *rs);
+//
     int
     (*try_alloc_resource)(struct disp_desc_manager *manager, resource_t *rs);
     
@@ -417,7 +417,7 @@ static int disp_desc_manager_init(disp_desc_manager_t *manager, int tab_len,
     manager->set_hash    = set_hash;
     manager->set_event   = set_event;
     
-    manager->check_alloc_resource = check_alloc_resource;
+//    manager->check_alloc_resource = check_alloc_resource;
     manager->try_alloc_resource   = try_alloc_resource;
     manager->free_resource        = free_resource;
     manager->get_currentversion   = get_currentversion_m;

@@ -4,7 +4,7 @@
 
 #ifndef TEST_QOS_TEST_FRAME_H
 #define TEST_QOS_TEST_FRAME_H
-
+#define TEST_CONCURRENCY
 #include "CUnit/CUnit.h"
 
 typedef int (*init_suit_func_t)(void);

@@ -35,7 +35,7 @@ target_link_libraries(libqos pthread libtest)
 add_compile_options("-fprofile-arcs")
 add_compile_options("-ftest-coverage")
 
-add_executable(test_app2disp test_app2dispatch/app2disp_test.c test_app2dispatch/test_memory_cache.c test_app2dispatch/test_memory_cache.h test_app2dispatch/test_rw_list.c test_app2dispatch/test_rw_list.h)
+add_executable(test_app2disp test_app2dispatch/app2disp_test.c test_app2dispatch/test_memory_cache.c test_app2dispatch/test_memory_cache.h test_app2dispatch/test_rw_list.c test_app2dispatch/test_rw_list.h test_app2dispatch/test_hashtab.c test_app2dispatch/test_hashtab.h)
 target_link_libraries(test_app2disp pthread cunit libqos libtest gcov)
 
 
