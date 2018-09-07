@@ -36,8 +36,6 @@ int nodereq_list_init(nodereq_list_t *tokens);
 
 void nodereq_list_exit(nodereq_list_t *tokens);
 
-void test_wait_token_list();
-
 #ifdef __cplusplus
 }
 #endif

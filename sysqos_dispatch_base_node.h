@@ -22,9 +22,9 @@ typedef struct dispatch_base_node
     long             version;
     pthread_rwlock_t lck;
     
+    int (*check_alloc_from_base)(struct dispatch_base_node *desc, long cost);
     /*******************************************************************************/
     void (*reset)(struct dispatch_base_node *base_node);
-    
     int (*try_alloc_from_base)(struct dispatch_base_node *base_node, long cost);
     
     void (*free_to_base)(struct dispatch_base_node *base_node, long cost);
@@ -41,8 +41,6 @@ typedef struct dispatch_base_node
 int dispatch_base_node_init(dispatch_base_node_t *base_node);
 
 void dispatch_base_node_exit(dispatch_base_node_t *base_node);
-
-void test_dispatch_base_node();
 
 #ifdef __cplusplus
 }

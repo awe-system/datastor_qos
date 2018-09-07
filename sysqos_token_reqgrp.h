@@ -74,8 +74,6 @@ int token_reqgrp_init(token_reqgrp_t *token_grp, memory_cache_t *resource_cache,
 void token_reqgrp_exit(token_reqgrp_t *token_grp,
                        memory_cache_t *resource_cache);
 
-void test_token_reqgrp();
-
 #ifdef __cplusplus
 }
 #endif

@@ -53,8 +53,6 @@ int dispatch_node_init(dispatch_node_t *item, int version);
 
 void dispatch_node_exit(dispatch_node_t *item);
 
-void test_dispatch_node();
-
 #ifdef __cplusplus
 }
 #endif

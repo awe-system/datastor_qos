@@ -39,5 +39,5 @@ add_executable(test_app2disp test_app2dispatch/app2disp_test.c test_app2dispatch
 target_link_libraries(test_app2disp pthread cunit libqos libtest gcov)
 
 
-add_executable(test_app test_applicant/app_test.c)
+add_executable(test_app test_applicant/app_test.c test_applicant/base_node.c test_applicant/base_node.h test_lib/test_frame.c test_lib/test_frame.h test_applicant/node_inapp.c test_applicant/node_inapp.h test_applicant/wait_token_list.c test_applicant/wait_token_list.h test_applicant/token_grp.c test_applicant/token_grp.h test_applicant/token_manager.c test_applicant/token_manager.h)
 target_link_libraries(test_app pthread cunit libqos libtest gcov)

@@ -227,21 +227,21 @@ static void fill_random_array(unsigned long a[], unsigned long num)
         a[i] = i;
     }
 }
-
-static void test_dump(test_map_t *tm)
-{
-    unsigned long i = 0;
-    
-    printf(GREEN"--------i,tm->vals[i],tm->lock_tab[i],tm->in_tab[i],tm->out_tab[i]-----------------------------------\n"RESET);
-    for ( i = 0; i < tm->max_key_num; ++i )
-    {
-        printf("[%lu]:%lu:%lu:[%d]:[%d]\t", i, tm->vals[i], tm->lock_tab[i],
-               tm->in_tab[i] ? 1 : 0, tm->out_tab[i] ? 1l : 0);
-        if ( i % 8 == 7 )
-        { printf("\n"); }
-    }
-    printf("\n");
-}
+//
+//static void test_dump(test_map_t *tm)
+//{
+//    unsigned long i = 0;
+//
+//    printf(GREEN"--------i,tm->vals[i],tm->lock_tab[i],tm->in_tab[i],tm->out_tab[i]-----------------------------------\n"RESET);
+//    for ( i = 0; i < tm->max_key_num; ++i )
+//    {
+//        printf("[%lu]:%lu:%lu:[%d]:[%d]\t", i, tm->vals[i], tm->lock_tab[i],
+//               tm->in_tab[i] ? 1 : 0, tm->out_tab[i] ? 1l : 0);
+//        if ( i % 8 == 7 )
+//        { printf("\n"); }
+//    }
+//    printf("\n");
+//}
 
 void test_map_init(test_map_t *tm, unsigned long max_key_num)
 {
@@ -277,7 +277,7 @@ void test_map_init(test_map_t *tm, unsigned long max_key_num)
     tm->try_find_items_lock_erase   = test_try_find_items_lock_erase;
     tm->try_update_items_lock_erase = test_try_update_items_lock_erase;
     tm->unlock_erase                = test_unlock_erase;
-    tm->dump                        = test_dump;
+//    tm->dump                        = test_dump;
     
     fill_random_array(tm->vals, max_key_num);
 }

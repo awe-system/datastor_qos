@@ -54,8 +54,6 @@ int token_reqgrp_manager_init(token_reqgrp_manager_t *manager,
 
 void token_reqgrp_manager_exit(token_reqgrp_manager_t *manager);
 
-void test_token_reqgrp_manager();
-
 #ifdef __cplusplus
 }
 #endif

@@ -6,9 +6,8 @@
 #include <assert.h>
 #include <memory.h>
 #include "sysqos_dispatch_manager.h"
-#include "sysqos_app_node.h"
-#include "sysqos_token_update.h"
-
+//#include "sysqos_app_node.h"
+//#include "sysqos_token_update.h"
 
 static void wait_increase_erase(void *pri, struct app_node *node)
 {
