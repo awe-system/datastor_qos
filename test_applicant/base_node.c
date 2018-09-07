@@ -14,7 +14,7 @@
 #define RESOURCE_COST_LIST_NUM 10
 
 #define FIRST_NODE_NUM 5
-static bool is_increased = false;
+static bool is_increased            = false;
 
 
 typedef struct disp_desc_manager_event
@@ -92,9 +92,9 @@ unlock_manager:
 static long
 get_currentversion_m(struct disp_desc_manager *manager, void *id)
 {
-    int           err = QOS_ERROR_OK;
+    int  err = QOS_ERROR_OK;
     long ver = 0;
-    void          *desc;
+    void *desc;
     assert(manager != NULL);
     pthread_rwlock_rdlock(&manager->lck);
     err = manager->tab->find(manager->tab, id, &desc);
@@ -389,15 +389,15 @@ static void test_case_regular_rcvd_reduce()
     assert(is_increased == false);
     
     rs.cost = 1;
-    rs.id = (void *)1;
-    err = try_alloc_resource(manager, &rs);
-    assert(err == QOS_ERROR_PENDING);
+    rs.id   = (void *) 1;
     
     assert(manager->get_currentversion(manager, (void *) 1) == 2);
     assert(0 == manager->tab->find(manager->tab, (void *) 1, &desc));
     assert(((dispatch_base_node_t *) desc)->token_inuse == FIRST_TOTAL);
-    assert(((dispatch_base_node_t *) desc)->token_quota == FIRST_TOTAL -MMAX_RESPOND_STEP);
-
+    assert(((dispatch_base_node_t *) desc)->token_quota == FIRST_TOTAL);
+    assert(((dispatch_base_node_t *) desc)->token_quota_target
+           == FIRST_TOTAL - MMAX_RESPOND_STEP);
+    
     left_len = FIRST_TOTAL / 2;
     for ( i  = 0; i < FIRST_TOTAL / 2; ++i )
     {
@@ -414,11 +414,12 @@ static void test_case_regular_rcvd_reduce()
     
     assert(manager->get_currentversion(manager, (void *) 1) == 2);
     assert(0 == manager->tab->find(manager->tab, (void *) 1, &desc));
-    printf("\nssssssssssssssssss %d\n",((dispatch_base_node_t *) desc)->token_quota);
     assert(((dispatch_base_node_t *) desc)->token_inuse == FIRST_TOTAL / 2);
-    assert(((dispatch_base_node_t *) desc)->token_quota == FIRST_TOTAL / 2 );
+    printf("aaa %d",((dispatch_base_node_t *) desc)->token_quota);
+    assert(((dispatch_base_node_t *) desc)->token_quota
+           == FIRST_TOTAL / 2);
     assert(is_increased == false);
-
+    
     left_len = FIRST_TOTAL / 2;
     for ( i  = 0; i < FIRST_TOTAL / 2; ++i )
     {
@@ -436,7 +437,7 @@ static void test_case_regular_rcvd_reduce()
     assert(0 == manager->tab->find(manager->tab, (void *) 1, &desc));
     assert(((dispatch_base_node_t *) desc)->token_inuse == 0);
     assert(((dispatch_base_node_t *) desc)->token_quota == FIRST_TOTAL / 2);
-
+    
     manager->msg_event.node_offline(&manager->msg_event, (void *) 1);
 #ifdef CACHE_OPEN_CNT
     assert(manager->cache.alloc_cnt == manager->cache.free_cnt);
@@ -759,7 +760,7 @@ static int test_init()
     printf(YELLOW"--------------test_init----------------:\n"RESET);
     test_case_init_exit(manager);
     
-    return  CUE_SUCCESS;
+    return CUE_SUCCESS;
 }
 
 static int test_clean()

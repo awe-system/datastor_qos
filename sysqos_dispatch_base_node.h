@@ -8,7 +8,6 @@
 #include "hash_table.h"
 #include "sysqos_interface.h"
 
-#define DISP_DESC_MANAGER_TEST
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,14 +16,18 @@ typedef struct dispatch_base_node
 {
     unsigned long    token_inuse;
     unsigned long    token_quota;
+    unsigned long    token_quota_target;//
     unsigned long    token_quota_new;
     unsigned long    respond_step;
     long             version;
+    bool need_confirm;//
     pthread_rwlock_t lck;
     
     int (*check_alloc_from_base)(struct dispatch_base_node *desc, long cost);
+    
     /*******************************************************************************/
     void (*reset)(struct dispatch_base_node *base_node);
+    
     int (*try_alloc_from_base)(struct dispatch_base_node *base_node, long cost);
     
     void (*free_to_base)(struct dispatch_base_node *base_node, long cost);

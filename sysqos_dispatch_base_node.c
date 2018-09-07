@@ -34,6 +34,26 @@ static inline bool is_version_same(dispatch_base_node_t *desc, long new_ver)
     return is_same;
 }
 
+static inline void update_quota_target(dispatch_base_node_t *base_node)
+{
+    //decrease only
+    base_node->token_quota_target = min(base_node->token_quota_target,
+                                        max(base_node->token_quota_new,
+                                            base_node->token_inuse));
+    base_node->token_quota_target = min(base_node->token_quota_target,
+                                        max(base_node->token_quota_new,
+                                            base_node->token_quota_target -
+                                            base_node->respond_step));
+}
+
+static void update_quota(dispatch_base_node_t *base_node)
+{
+    //decrease only
+    base_node->token_quota = min(base_node->token_quota,
+                                 max(base_node->token_inuse,
+                                     base_node->token_quota_target));
+}
+
 static bool check_update_total_version(dispatch_base_node_t *base_node,
                                        unsigned long new_total,
                                        long new_ver, bool *is_reset)
@@ -58,20 +78,20 @@ static bool check_update_total_version(dispatch_base_node_t *base_node,
         if ( base_node->token_quota < new_total )
         {
             is_resource_increased = true;
-            base_node->token_quota = base_node->token_quota_new = new_total;
+            base_node->token_quota        = new_total;
+            base_node->token_quota_new    = new_total;
+            base_node->token_quota_target = new_total;
         }
         else if ( base_node->token_quota > new_total )
         {
             base_node->token_quota_new = new_total;
-            base_node->token_quota     = max(new_total,
-                                             base_node->token_quota -
-                                             base_node->respond_step);
+            update_quota_target(base_node);
+            update_quota(base_node);
         }
         base_node->version = new_ver;
     }
     pthread_rwlock_unlock(&base_node->lck);
     
-    // check_update_version(base_node);
     return is_resource_increased;
 }
 
@@ -87,6 +107,7 @@ static int check_alloc_from_base(dispatch_base_node_t *desc, long cost)
     return QOS_ERROR_OK;
 }
 
+
 static int try_alloc_from_desc(dispatch_base_node_t *desc, long cost)
 {
     int err = check_alloc_from_base(desc, cost);
@@ -96,28 +117,34 @@ static int try_alloc_from_desc(dispatch_base_node_t *desc, long cost)
     }
     
     pthread_rwlock_wrlock(&desc->lck);
-    if ( cost + desc->token_inuse <= desc->token_quota )
+    if ( cost + desc->token_inuse <= desc->token_quota_target )
     {
+        update_quota_target(desc);
         desc->token_inuse += cost;
-        if ( desc->token_quota_new < desc->token_quota )
-        {
-            desc->token_quota = max(desc->token_quota_new,
-                                    desc->token_quota - desc->respond_step);
-        }
     }
     pthread_rwlock_unlock(&desc->lck);
     return QOS_ERROR_OK;
 }
 
-static void free_to_desc(dispatch_base_node_t *desc, long cost)
+static void free_to_base(dispatch_base_node_t *desc, long cost)
 {
     pthread_rwlock_wrlock(&desc->lck);
     desc->token_inuse -= cost;
-    if(desc->token_quota_new < desc->token_quota)
+    do
     {
-        desc->token_quota = max(desc->token_quota_new,
-                                desc->token_quota - desc->respond_step);
-    }
+        if ( desc->token_quota_target + desc->respond_step < desc->token_quota
+             || desc->token_quota_target == desc->token_quota_new )
+        {
+            update_quota(desc);
+            break;
+        }
+        update_quota_target(desc);
+        if ( desc->token_quota_target + desc->respond_step < desc->token_quota
+             || desc->token_quota_target == desc->token_quota_new )
+        {
+            update_quota(desc);
+        }
+    }while(0);
     pthread_rwlock_unlock(&desc->lck);
 }
 
@@ -143,9 +170,10 @@ static unsigned long get_alloced(dispatch_base_node_t *desc)
 static void reset(struct dispatch_base_node *desc)
 {
     pthread_rwlock_wrlock(&desc->lck);
-    desc->token_quota     = MIN_RS_NUM;
-    desc->token_quota_new = MIN_RS_NUM;
-    desc->version         = 0;
+    desc->token_quota        = MIN_RS_NUM;
+    desc->token_quota_target = MIN_RS_NUM;
+    desc->token_quota_new    = MIN_RS_NUM;
+    desc->version            = 0;
     pthread_rwlock_unlock(&desc->lck);
 }
 
@@ -154,12 +182,13 @@ int dispatch_base_node_init(dispatch_base_node_t *base_node)
     base_node->token_inuse                = 0;
     base_node->version                    = 0;
     base_node->token_quota                = MIN_RS_NUM;
+    base_node->token_quota_target         = MIN_RS_NUM;
     base_node->token_quota_new            = MIN_RS_NUM;
     base_node->respond_step               = MMAX_RESPOND_STEP;
     base_node->get_version                = get_currentversion;
     base_node->get_token_inuse            = get_alloced;
-    base_node->check_alloc_from_base = check_alloc_from_base;
-    base_node->free_to_base               = free_to_desc;
+    base_node->check_alloc_from_base      = check_alloc_from_base;
+    base_node->free_to_base               = free_to_base;
     base_node->try_alloc_from_base        = try_alloc_from_desc;
     base_node->check_update_quota_version = check_update_total_version;
     base_node->reset                      = reset;
