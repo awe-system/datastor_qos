@@ -45,7 +45,7 @@ typedef struct dispatch_node
     /********************************************/
     dispatch_base_node_t    base_node;
     nodereq_list_t     lhead_nodereq;
-    pthread_spinlock_t lck;
+    sysqos_spin_lock_t lck;
     int                fence_id;
 } dispatch_node_t;
 

@@ -6,6 +6,7 @@
 #define TEST_QOS_MEMORY_CACHE_H
 
 #include <sys/param.h>
+#include "sysqos_type.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +27,7 @@ typedef struct memory_cache
 #ifdef CACHE_OPEN_CNT
     unsigned long      alloc_cnt;
     unsigned long      free_cnt;
-    pthread_spinlock_t lck;
+    sysqos_spin_lock_t lck;
 #endif
 } memory_cache_t;
 

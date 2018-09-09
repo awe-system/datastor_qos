@@ -37,7 +37,7 @@ static void resource_increased(dispatch_node_t *item,
         return;
     }
     
-    pthread_spin_lock(&item->lck);
+    sysqos_spin_lock(&item->lck);
     while ( NULL != (rs = tokens->front(tokens)) )
     {
         err = desc->try_alloc_from_base(desc, rs->rs.cost);
@@ -52,7 +52,7 @@ static void resource_increased(dispatch_node_t *item,
             list_add(permission_list, got_permission_list);
         }
     }
-    pthread_spin_unlock(&item->lck);
+    sysqos_spin_unlock(&item->lck);
 }
 
 static bool resource_changed(dispatch_node_t *item,
@@ -104,7 +104,7 @@ alloc_resource(struct dispatch_node *item, resource_list_t *rs)
     err = item->base_node.try_alloc_from_base(&item->base_node, rs->rs.cost);
     if ( err )
     {
-        pthread_spin_lock(&item->lck);
+        sysqos_spin_lock(&item->lck);
         err = item->base_node.try_alloc_from_base(&item->base_node, rs->rs.cost);
         if ( err )
         {
@@ -115,7 +115,7 @@ alloc_resource(struct dispatch_node *item, resource_list_t *rs)
             token_reqgrp_t *permission = rip->token_grp;
             err                         = permission->to_got(permission, rip);
         }
-        pthread_spin_unlock(&item->lck);
+        sysqos_spin_unlock(&item->lck);
     }
     else
     {
@@ -162,7 +162,7 @@ static void pop_all(struct dispatch_node *item,
 void dispatch_node_exit(dispatch_node_t *item)
 {
     assert(item);
-    pthread_spin_destroy(&item->lck);
+    sysqos_spin_destroy(&item->lck);
     nodereq_list_exit(&item->lhead_nodereq);
     dispatch_base_node_exit(&item->base_node);
 }
@@ -184,7 +184,7 @@ int dispatch_node_init(dispatch_node_t *item, int version)
         goto token_list_init_failed;
     }
     
-    err = pthread_spin_init(&item->lck, PTHREAD_PROCESS_PRIVATE);
+    err = sysqos_spin_init(&item->lck);
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, spin_init_failed);
     
@@ -198,7 +198,7 @@ int dispatch_node_init(dispatch_node_t *item, int version)
     item->reset            = reset;
     
     return err;
-    pthread_spin_destroy(&item->lck);
+    sysqos_spin_destroy(&item->lck);
 spin_init_failed:
     nodereq_list_exit(&item->lhead_nodereq);
 token_list_init_failed:

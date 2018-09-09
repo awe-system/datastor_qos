@@ -6,6 +6,7 @@
 #define _QOS_SYSQOS_DISP_TOKEN_NODE_H
 
 #include <sys/param.h>
+#include "sysqos_type.h"
 #include "sysqos_policy_param.h"
 #include "sysqos_interface.h"
 #include "sysqos_protocol.h"
@@ -64,7 +65,7 @@ typedef struct app_node
     limit_t            limit;
     long               version;
     long               fence_id;
-    pthread_spinlock_t lck;
+    sysqos_spin_lock_t lck;
 }app_node_t;
 
 

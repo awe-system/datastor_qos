@@ -947,12 +947,14 @@ static int test_init()
 {
     printf(YELLOW"--------------test_init------------:\n"RESET);
     test_case_init_exit(manager);
+    return CUE_SUCCESS;
 }
 
 static int test_clean()
 {
     token_reqgrp_manager_exit(manager);
     printf(BLUE"--------------test_clean--------:\n"RESET);
+    return CUE_SUCCESS;
 }
 
 void token_manager_suit_init(test_frame_t *frame)

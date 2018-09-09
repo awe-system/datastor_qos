@@ -203,6 +203,7 @@ void *test_thread_got(void *data)
     {
         assert(err == QOS_ERROR_PENDING);
     }
+    return NULL;
 }
 
 void *test_thread_failed(void *data)
@@ -222,6 +223,7 @@ void *test_thread_failed(void *data)
     {
         assert(err == QOS_ERROR_PENDING);
     }
+    return NULL;
 }
 
 static void test_case_concurrency_got()

@@ -20,7 +20,7 @@ static void test_case_init_exit(dispatch_node_t *item)
     printf("[test_case_init_exit] %s[OK]%s\n", GREEN, RESET);
 }
 
-static int
+static void
 test_alloc_permissions(token_reqgrp_t *permissions[], memory_cache_t *percache,
                        memory_cache_t *rscache,
                        bool is_rand)
@@ -54,6 +54,7 @@ test_alloc_permissions(token_reqgrp_t *permissions[], memory_cache_t *percache,
         assert(permissions[i]);
         assert(0 == token_reqgrp_init(permissions[i], rscache, &head, NULL));
     }
+    //return 0;
 }
 
 static void

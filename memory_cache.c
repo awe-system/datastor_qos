@@ -14,22 +14,22 @@ static void *cache_alloc(struct memory_cache *cache)
 {
     void *res = NULL;
 #ifdef CACHE_OPEN_CNT
-    pthread_spin_lock(&cache->lck);
+    sysqos_spin_lock(&cache->lck);
     if ( cache->free_cnt + cache->cache_unit - cache->alloc_cnt > 0 )
     {
         ++cache->alloc_cnt;
-        pthread_spin_unlock(&cache->lck);
+        sysqos_spin_unlock(&cache->lck);
 #endif
         //刷0
         res = qos_alloc(cache->unit_size);
 #ifdef CACHE_OPEN_CNT
-        pthread_spin_lock(&cache->lck);
+        sysqos_spin_lock(&cache->lck);
         if ( res == NULL )
         {
             --cache->alloc_cnt;
         }
     }
-    pthread_spin_unlock(&cache->lck);
+    sysqos_spin_unlock(&cache->lck);
 #endif
     return res;
 }
@@ -37,9 +37,9 @@ static void *cache_alloc(struct memory_cache *cache)
 static void cache_free(struct memory_cache *cache, void *data)
 {
 #ifdef CACHE_OPEN_CNT
-    pthread_spin_lock(&cache->lck);
+    sysqos_spin_lock(&cache->lck);
     ++cache->free_cnt;
-    pthread_spin_unlock(&cache->lck);
+    sysqos_spin_unlock(&cache->lck);
 #endif
     qos_free(data);
 }
@@ -56,7 +56,7 @@ int memory_cache_init(memory_cache_t *cache, unsigned long unit_size,
 #ifdef CACHE_OPEN_CNT
     cache->alloc_cnt = 0;
     cache->free_cnt  = 0;
-    pthread_spin_init(&cache->lck, PTHREAD_PROCESS_PRIVATE);
+    sysqos_spin_init(&cache->lck);
 #endif
     return 0;
 }
@@ -64,7 +64,7 @@ int memory_cache_init(memory_cache_t *cache, unsigned long unit_size,
 void memory_cache_exit(memory_cache_t *cache)
 {
 #ifdef CACHE_OPEN_CNT
-    pthread_spin_destroy(&cache->lck);
+    sysqos_spin_destroy(&cache->lck);
 #endif
     
     assert(cache);

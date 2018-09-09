@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #define PRESS_TYPE_BIT 2
-#define PRESS_VAL_BIT  (sizeof(unsigned long)<<3 - PRESS_TYPE_BIT)
+#define PRESS_VAL_BIT  62//(sizeof(unsigned long)<<3 - PRESS_TYPE_BIT)
 enum
 {
     press_type_fifo,

@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <pthread.h>
+#include "sysqos_type.h"
 #include "hash_table.h"
 #include "sysqos_alloc.h"
 #include "sysqos_container_item.h"

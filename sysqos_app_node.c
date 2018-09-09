@@ -14,7 +14,7 @@ static int dtn_alloc(struct app_node *node, resource_t *rs,
     //TODO:降低锁冲突
     int err = QOS_ERROR_OK;
     assert(node && rs && pfence_id);
-    pthread_spin_lock(&node->lck);
+    sysqos_spin_lock(&node->lck);
     if ( node->token_inuse + rs->cost > node->token_quota )
     {
         end_func(err, QOS_ERROR_TOOBIGCOST, unlock_end);
@@ -22,7 +22,7 @@ static int dtn_alloc(struct app_node *node, resource_t *rs,
     node->token_inuse += rs->cost;
     *pfence_id = node->fence_id;
 unlock_end:
-    pthread_spin_unlock(&node->lck);
+    sysqos_spin_unlock(&node->lck);
     return err;
 }
 
@@ -31,21 +31,21 @@ static void dtn_free(struct app_node *node, resource_t *rs,
 {
     //TODO:降低锁冲突
     assert(node && rs);
-    pthread_spin_lock(&node->lck);
+    sysqos_spin_lock(&node->lck);
     if ( node->fence_id != fence_id )
     { goto unlock_end; }
     assert(node->token_inuse < rs->cost);
     node->token_inuse -= rs->cost;
 unlock_end:
-    pthread_spin_unlock(&node->lck);
+    sysqos_spin_unlock(&node->lck);
 }
 
 static void get_protocol(app_node_t *node, dispatch2app_t *d2a)
 {
-    pthread_spin_lock(&node->lck);
+    sysqos_spin_lock(&node->lck);
     d2a->version     = node->version;
     d2a->token_quota = min(node->token_quota_new, node->token_quota);
-    pthread_spin_unlock(&node->lck);
+    sysqos_spin_unlock(&node->lck);
 }
 
 
@@ -64,7 +64,7 @@ static bool update_token_quota(struct app_node *node, void *pri,
     bool          is_global_enough = true;
     unsigned long new_quota        = 0;
     assert(node && pri && try_alloc_func && erase_func);
-    pthread_spin_lock(&node->lck);
+    sysqos_spin_lock(&node->lck);
     if ( node->token_quota < node->token_quota_new )
     {//变小时在rcvd触发 这里只处理变大的情况
         new_quota = node->token_quota_new - node->token_quota;
@@ -78,7 +78,7 @@ static bool update_token_quota(struct app_node *node, void *pri,
             is_global_enough = false;
         }
     }
-    pthread_spin_unlock(&node->lck);
+    sysqos_spin_unlock(&node->lck);
     return is_global_enough;
 }
 
@@ -125,7 +125,7 @@ static unsigned long update_token_quota_new(struct app_node *node,
                                             insert_func_t insert_func)
 {
     assert(token_quota_new >= node->limit.min);
-    pthread_spin_lock(&node->lck);
+    sysqos_spin_lock(&node->lck);
     token_quota_new = new_quota_under_limit(node, token_quota_new);
     
     if ( node->token_quota_new > token_quota_new )//比上次调整变小
@@ -137,7 +137,7 @@ static unsigned long update_token_quota_new(struct app_node *node,
         update_token_quota_new_up(node, token_quota_new, pri, insert_func);
     }
     node->token_quota_new = token_quota_new;
-    pthread_spin_unlock(&node->lck);
+    sysqos_spin_unlock(&node->lck);
     assert(token_quota_new >= node->limit.min);
     return token_quota_new;
     
@@ -161,13 +161,13 @@ static unsigned long update_quota_after_rcvd(app_node_t *node,
 static bool rcvd(struct app_node *node, app2dispatch_t *a2d,
                  unsigned long *free_size)
 {
-    pthread_spin_lock(&node->lck);
+    sysqos_spin_lock(&node->lck);
     if ( a2d->version == node->version )
     {
         node->press = a2d->press.fifo.depth;
         *free_size = update_quota_after_rcvd(node, a2d->token_in_use);
     }
-    pthread_spin_unlock(&node->lck);
+    sysqos_spin_unlock(&node->lck);
     return false;
 }
 
@@ -207,12 +207,12 @@ int app_node_init(app_node_t *node, unsigned long min_units,
     
     appnode_init_func(node);
     
-    return pthread_spin_init(&node->lck, PTHREAD_PROCESS_PRIVATE);
+    return sysqos_spin_init(&node->lck);
 }
 
 void app_node_exit(app_node_t *node)
 {
-    pthread_spin_destroy(&node->lck);
+    sysqos_spin_destroy(&node->lck);
 }
 
 /**for test********************************************************************/

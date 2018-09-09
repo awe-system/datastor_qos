@@ -3,7 +3,7 @@
 //
 
 #include <stddef.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
@@ -13,6 +13,7 @@ void *qos_alloc(unsigned long size)
     void *p = malloc(size);
     assert(p);
     memset(p, 0, size);
+    return p;
 }
 
 void qos_free(void *p)

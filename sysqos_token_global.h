@@ -24,7 +24,7 @@ typedef struct token_global
     unsigned long app_num_max;
     unsigned long app_num_cur;
     unsigned long app_max_token_rsvr;
-    pthread_spinlock_t lck;
+    sysqos_spin_lock_t lck;
     /**public****************************************************/
     //为node分配额外的空间
     int (*online)(struct token_global *tokens, app_node_t *node);

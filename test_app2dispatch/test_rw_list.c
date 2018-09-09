@@ -2,7 +2,7 @@
 // Created by root on 18-9-4.
 //
 
-#include <bits/time.h>
+//#include <bits/time.h>
 #include <time.h>
 #include <unistd.h>
 #include "test_rw_list.h"
@@ -121,6 +121,7 @@ static void *insert_thread_func(void *arg)
         left_num -= tmp_len;
         usleep(1000);
     }
+    return NULL;
 }
 
 static void *erase_thread_func(void *arg)
@@ -142,6 +143,7 @@ static void *erase_thread_func(void *arg)
         test.complete_erase(&test, tmp_len, pairs);
         left_num -= tmp_len;
     }
+    return NULL;
 }
 
 static void *find_thread_func(void *arg)
@@ -163,6 +165,7 @@ static void *find_thread_func(void *arg)
         test.unlock_erase(&test, tmp_len, pairs);
         left_num -= tmp_len;
     }
+    return NULL;
 }
 
 static void test_case_concurrency()

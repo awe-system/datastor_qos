@@ -9,7 +9,7 @@
 #include "token_grp.h"
 #include "token_manager.h"
 
-int main(int argc, char *argv)
+int main(int argc, char *argv[])
 {
     test_frame_t frame;
     
