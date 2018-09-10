@@ -6,9 +6,6 @@
 #include <assert.h>
 #include <pthread.h>
 #include "sysqos_dispatch_base_node.h"
-#include "sysqos_protocol.h"
-//#include "sysqos_interface.h"
-#include "sysqos_test_lib.h"
 
 static inline bool is_to_reset(dispatch_base_node_t *desc, long new_ver)
 {
@@ -34,24 +31,58 @@ static inline bool is_version_same(dispatch_base_node_t *desc, long new_ver)
     return is_same;
 }
 
+
+static inline void update_quota_target_force(dispatch_base_node_t *base_node)
+{
+    //decrease only
+    if ( base_node->token_inuse - base_node->respond_step <
+         base_node->token_quota_new )
+    {
+        base_node->token_quota_target = base_node->token_quota_new;
+    }
+    else
+    {
+        base_node->token_quota_target = min(base_node->token_quota_target,
+                                            max(base_node->token_quota_new,
+                                                base_node->token_quota_target
+                                                - base_node->respond_step));
+    }
+}
+
 static inline void update_quota_target(dispatch_base_node_t *base_node)
 {
     //decrease only
-    base_node->token_quota_target = min(base_node->token_quota_target,
-                                        max(base_node->token_quota_new,
-                                            base_node->token_inuse));
-    base_node->token_quota_target = min(base_node->token_quota_target,
-                                        max(base_node->token_quota_new,
-                                            base_node->token_quota_target -
-                                            base_node->respond_step));
+    if ( base_node->token_inuse - base_node->respond_step <
+         base_node->token_quota_new )
+    {
+        base_node->token_quota_target = base_node->token_quota_new;
+    }
+    else
+    {
+        base_node->token_quota_target = min(base_node->token_quota_target,
+                                            max(base_node->token_quota_new,
+                                                base_node->token_inuse +
+                                                base_node->respond_step));
+    }
 }
 
 static void update_quota(dispatch_base_node_t *base_node)
 {
     //decrease only
-    base_node->token_quota = min(base_node->token_quota,
-                                 max(base_node->token_inuse,
-                                     base_node->token_quota_target));
+    
+    if ( base_node->token_quota_target == base_node->token_quota_new )
+    {
+        base_node->token_quota = min(base_node->token_quota,
+                                     max(base_node->token_inuse,
+                                         base_node->token_quota_new));
+    }
+    else
+    {
+        base_node->token_quota = min(base_node->token_quota,
+                                     max(base_node->token_inuse,
+                                         base_node->token_quota_target +
+                                         base_node->respond_step));
+    }
 }
 
 static bool check_update_total_version(dispatch_base_node_t *base_node,
@@ -85,7 +116,7 @@ static bool check_update_total_version(dispatch_base_node_t *base_node,
         else if ( base_node->token_quota > new_total )
         {
             base_node->token_quota_new = new_total;
-            update_quota_target(base_node);
+            update_quota_target_force(base_node);
             update_quota(base_node);
         }
         base_node->version = new_ver;
@@ -98,7 +129,7 @@ static bool check_update_total_version(dispatch_base_node_t *base_node,
 static int check_alloc_from_base(dispatch_base_node_t *desc, long cost)
 {
     pthread_rwlock_rdlock(&desc->lck);
-    if ( cost + desc->token_inuse > desc->token_quota )
+    if ( cost + desc->token_inuse > desc->token_quota_target )
     {
         pthread_rwlock_unlock(&desc->lck);
         return QOS_ERROR_PENDING;
@@ -119,33 +150,34 @@ static int try_alloc_from_desc(dispatch_base_node_t *desc, long cost)
     pthread_rwlock_wrlock(&desc->lck);
     if ( cost + desc->token_inuse <= desc->token_quota_target )
     {
-        update_quota_target(desc);
+        update_quota_target_force(desc);
         desc->token_inuse += cost;
     }
     pthread_rwlock_unlock(&desc->lck);
     return QOS_ERROR_OK;
 }
 
-static void free_to_base(dispatch_base_node_t *desc, long cost)
+//返回剧当前是否能得到申请配额
+static bool free_to_base(dispatch_base_node_t *desc, long cost)
 {
+    bool could_alloc = false;
     pthread_rwlock_wrlock(&desc->lck);
     desc->token_inuse -= cost;
-    do
+    
+    update_quota_target(desc);
+    if ( desc->token_quota_target + desc->respond_step < desc->token_quota
+         || desc->token_quota_target == desc->token_quota_new )
     {
-        if ( desc->token_quota_target + desc->respond_step < desc->token_quota
-             || desc->token_quota_target == desc->token_quota_new )
-        {
-            update_quota(desc);
-            break;
-        }
-        update_quota_target(desc);
-        if ( desc->token_quota_target + desc->respond_step < desc->token_quota
-             || desc->token_quota_target == desc->token_quota_new )
-        {
-            update_quota(desc);
-        }
-    }while(0);
+        update_quota(desc);
+
+    }
+    
+    if ( desc->token_inuse < desc->token_quota_target )
+    {
+        could_alloc = true;
+    }
     pthread_rwlock_unlock(&desc->lck);
+    return could_alloc;
 }
 
 static long get_currentversion(dispatch_base_node_t *desc)

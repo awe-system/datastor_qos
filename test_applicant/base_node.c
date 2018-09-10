@@ -13,7 +13,7 @@
 #define FIRST_TOTAL    2000
 #define RESOURCE_COST_LIST_NUM 10
 
-#define FIRST_NODE_NUM 5
+//#define FIRST_NODE_NUM 5
 static bool is_increased            = false;
 
 
@@ -37,7 +37,8 @@ typedef struct disp_desc_manager
     int
     (*try_alloc_resource)(struct disp_desc_manager *manager, resource_t *rs);
     
-    int (*free_resource)(struct disp_desc_manager *manager, resource_t *rs);
+    int (*free_resource)(struct disp_desc_manager *manager, resource_t *rs,
+                         bool *could_alloc);
     
     long
     (*get_currentversion)(struct disp_desc_manager *manager, void *id);
@@ -56,7 +57,7 @@ static disp_desc_manager_t *manager = &manager_static;
 
 static int try_alloc_resource(struct disp_desc_manager *manager, resource_t *rs)
 {
-    int  err   = QOS_ERROR_OK;
+    int  err;
     void *desc = NULL;
     CU_ASSERT(manager && rs && rs->cost);
     pthread_rwlock_rdlock(&manager->lck);
@@ -73,9 +74,11 @@ unlock_manager:
     return err;
 }
 
-static int free_resource(struct disp_desc_manager *manager, resource_t *rs)
+static int free_resource(struct disp_desc_manager *manager,
+                         resource_t *rs,
+                         bool *could_alloc)
 {
-    int  err   = QOS_ERROR_OK;
+    int  err;
     void *desc = NULL;
     assert(manager && rs && rs->cost);
     pthread_rwlock_rdlock(&manager->lck);
@@ -83,7 +86,8 @@ static int free_resource(struct disp_desc_manager *manager, resource_t *rs)
     if ( err )
         end_func(err, QOS_ERROR_FAILEDNODE, unlock_manager);
     assert(desc != NULL);
-    ((dispatch_base_node_t *) desc)->free_to_base(desc, rs->cost);
+    *could_alloc = ((dispatch_base_node_t *) desc)->free_to_base(desc,
+                                                                 rs->cost);
 unlock_manager:
     pthread_rwlock_unlock(&manager->lck);
     return err;
@@ -92,7 +96,7 @@ unlock_manager:
 static long
 get_currentversion_m(struct disp_desc_manager *manager, void *id)
 {
-    int  err = QOS_ERROR_OK;
+    int  err;
     long ver = 0;
     void *desc;
     assert(manager != NULL);
@@ -136,7 +140,7 @@ disp_desc_manager_by_msg_event(struct msg_event_ops *ops)
 static void node_online(struct msg_event_ops *ops, void *id)
 {
     disp_desc_manager_t  *manager = disp_desc_manager_by_msg_event(ops);
-    int                  err      = QOS_ERROR_OK;
+    int                  err;
     dispatch_base_node_t *desc    = manager->cache.alloc(&manager->cache);
     assert(desc != NULL);
     err = dispatch_base_node_init(desc);
@@ -155,17 +159,13 @@ static void node_reset(struct msg_event_ops *ops, void *id)
 {
     disp_desc_manager_t *manager = disp_desc_manager_by_msg_event(ops);
     void                *desc    = NULL;
-    int                 err      = QOS_ERROR_OK;
+    int                 err;
     pthread_rwlock_wrlock(&manager->lck);
-    do
+    err = manager->tab->find(manager->tab, id, &desc);
+    if ( !err )
     {
-        err = manager->tab->find(manager->tab, id, &desc);
-        if ( err )
-        {
-            break;
-        }
         ((dispatch_base_node_t *) desc)->reset((dispatch_base_node_t *) desc);
-    } while ( 0 );
+    }
     pthread_rwlock_unlock(&manager->lck);
 }
 
@@ -173,7 +173,7 @@ static void node_offline(struct msg_event_ops *ops, void *id)
 {
     disp_desc_manager_t *manager = disp_desc_manager_by_msg_event(ops);
     void                *desc    = NULL;
-    int                 err      = QOS_ERROR_OK;
+    int                 err;
     pthread_rwlock_wrlock(&manager->lck);
     err = manager->tab->erase(manager->tab, id, &desc);
     pthread_rwlock_unlock(&manager->lck);
@@ -194,24 +194,19 @@ static void rcvd(struct msg_event_ops *ops, void *id,
     dispatch2app_t      app;
     assert(len == sizeof(dispatch2app_t) && manager->event_to_permission &&
            manager->event_to_permission->resource_increased);
-    memcpy(&app, buf, len);
+    memcpy(&app, buf, (size_t)len);
     
     void *desc;
     pthread_rwlock_rdlock(&manager->lck);
-    do
+    int err = manager->tab->find(manager->tab, id, &desc);
+    if ( !err )
     {
-        int err = manager->tab->find(manager->tab, id, &desc);
-        if ( err )
-        {
-            break;
-        }
-        
         is_resource_increased =
                 ((dispatch_base_node_t *) desc)->check_update_quota_version(
                         (dispatch_base_node_t *) desc,
                         app.token_quota,
                         app.version, &is_reset);
-    } while ( 0 );
+    }
     pthread_rwlock_unlock(&manager->lck);
     if ( is_reset )
     {
@@ -225,9 +220,9 @@ static void rcvd(struct msg_event_ops *ops, void *id,
 }
 
 static int disp_desc_manager_init(disp_desc_manager_t *manager, int tab_len,
-                                  int max_node_num)
+                                  unsigned long max_node_num)
 {
-    int err = QOS_ERROR_OK;
+    int err;
     memset(manager, 0, sizeof(disp_desc_manager_t));
     manager->tab = alloc_hash_table(tab_len, max_node_num);
     if ( !manager->tab )
@@ -257,7 +252,7 @@ static int disp_desc_manager_init(disp_desc_manager_t *manager, int tab_len,
     manager->get_currentversion = get_currentversion_m;
     
     return QOS_ERROR_OK;
-    pthread_rwlock_destroy(&manager->lck);
+//    pthread_rwlock_destroy(&manager->lck);
 rwlock_init_failed:
     memory_cache_exit(&manager->cache);
 memory_cache_init_failed:
@@ -279,6 +274,7 @@ const unsigned long rs_cost_list[RESOURCE_COST_LIST_NUM] =
 
 static void resource_increased(disp_desc_manager_event_t *event, void *id)
 {
+    printf("evnet %p, id %p\n",event,id);
     is_increased = true;
 }
 
@@ -308,13 +304,14 @@ static void test_case_init_exit(disp_desc_manager_t *manager)
 
 static void test_case_regular_online_offline()
 {
-    int        err = QOS_ERROR_OK;
+    bool       could_alloc = false;
+    int        err;
     resource_t rs;
     rs.cost = 1;
     rs.id   = (void *) 1;
     err = manager->try_alloc_resource(manager, &rs);
     assert(err);
-    err = manager->free_resource(manager, &rs);
+    err = manager->free_resource(manager, &rs, &could_alloc);
     assert(err);
     manager->msg_event.node_online(&manager->msg_event, (void *) 1);
     manager->msg_event.node_online(&manager->msg_event, (void *) 1);
@@ -354,6 +351,106 @@ static void test_case_regular_rcvd()
 
 static void test_case_regular_rcvd_reduce()
 {
+    bool could_alloc  = false;
+    unsigned long  left_len = FIRST_TOTAL;
+    int            i        = 0;
+    int            err      = 0;
+    void           *desc;
+    dispatch2app_t dta;
+    dta.version     = 1;
+    dta.token_quota = FIRST_TOTAL;
+    is_increased = false;
+    manager->msg_event.node_online(&manager->msg_event, (void *) 1);
+    manager->msg_event
+            .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
+                  (unsigned char *) &dta);
+    assert(is_increased == true);
+    resource_t rs;
+    for ( i = 0; i < FIRST_TOTAL; ++i )
+    {
+        if ( left_len == 0 )
+        {
+            break;
+        }
+        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.id   = (void *) 1;
+        err = try_alloc_resource(manager, &rs);
+        assert(err == 0);
+        left_len -= rs.cost;
+    }
+    dta.version     = 2;
+    dta.token_quota = FIRST_TOTAL / 2;
+    is_increased = false;
+    manager->msg_event
+            .rcvd(&manager->msg_event, (void *) 1, sizeof(dispatch2app_t),
+                  (unsigned char *) &dta);
+    assert(is_increased == false);
+    
+    rs.cost = 1;
+    rs.id   = (void *) 1;
+    
+    assert(manager->get_currentversion(manager, (void *) 1) == 2);
+    assert(0 == manager->tab->find(manager->tab, (void *) 1, &desc));
+    assert(((dispatch_base_node_t *) desc)->token_inuse == FIRST_TOTAL);
+    assert(((dispatch_base_node_t *) desc)->token_quota == FIRST_TOTAL);
+    
+    assert(((dispatch_base_node_t *) desc)->token_quota_target
+           == FIRST_TOTAL - MMAX_RESPOND_STEP);
+    
+    
+    left_len = FIRST_TOTAL / 2;
+    for ( i  = 0; i < FIRST_TOTAL / 2; ++i )
+    {
+        if ( left_len == 0 )
+        {
+            break;
+        }
+        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.id   = (void *) 1;
+        err = free_resource(manager, &rs,&could_alloc);
+        assert(err == 0);
+        left_len -= rs.cost;
+    }
+    
+    assert(manager->get_currentversion(manager, (void *) 1) == 2);
+    assert(0 == manager->tab->find(manager->tab, (void *) 1, &desc));
+    assert(((dispatch_base_node_t *) desc)->token_inuse == FIRST_TOTAL / 2);
+    assert(((dispatch_base_node_t *) desc)->token_quota
+           == FIRST_TOTAL / 2 );
+    assert(((dispatch_base_node_t *) desc)->token_quota_target
+           == FIRST_TOTAL / 2);
+    assert(is_increased == false);
+    
+    left_len = FIRST_TOTAL / 2;
+    for ( i  = 0; i < FIRST_TOTAL / 2; ++i )
+    {
+        if ( left_len == 0 )
+        {
+            break;
+        }
+        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.id   = (void *) 1;
+        err = free_resource(manager, &rs, &could_alloc);
+        assert(err == 0);
+        left_len -= rs.cost;
+    }
+    assert(manager->get_currentversion(manager, (void *) 1) == 2);
+    assert(0 == manager->tab->find(manager->tab, (void *) 1, &desc));
+    assert(((dispatch_base_node_t *) desc)->token_inuse == 0);
+    assert(((dispatch_base_node_t *) desc)->token_quota == FIRST_TOTAL / 2);
+    
+    manager->msg_event.node_offline(&manager->msg_event, (void *) 1);
+#ifdef CACHE_OPEN_CNT
+    assert(manager->cache.alloc_cnt == manager->cache.free_cnt);
+    assert(manager->tab->cache.alloc_cnt == manager->tab->cache.free_cnt);
+#endif
+    printf("[test_case_regular_rcvd_reduce] %s[OK]%s\n", GREEN, RESET);
+}
+
+
+static void test_case_rcvd_reduce_alloc()
+{
+    bool could_alloc = false;
     unsigned long  left_len = FIRST_TOTAL;
     int            i        = 0;
     int            err      = 0;
@@ -398,8 +495,9 @@ static void test_case_regular_rcvd_reduce()
     assert(((dispatch_base_node_t *) desc)->token_quota_target
            == FIRST_TOTAL - MMAX_RESPOND_STEP);
     
+    
     left_len = FIRST_TOTAL / 2;
-    for ( i  = 0; i < FIRST_TOTAL / 2; ++i )
+    for ( i  = 0; i < MMAX_RESPOND_STEP; ++i )
     {
         if ( left_len == 0 )
         {
@@ -407,15 +505,41 @@ static void test_case_regular_rcvd_reduce()
         }
         rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
-        err = free_resource(manager, &rs);
+        err = free_resource(manager, &rs,&could_alloc);
+        assert(err == 0);
+        left_len -= rs.cost;
+    }
+    assert(could_alloc);
+    rs.cost = 1;
+    rs.id   = (void *) 1;
+    err = try_alloc_resource(manager, &rs);
+    assert(err == 0);
+    
+    err = try_alloc_resource(manager, &rs);
+    assert(err == QOS_ERROR_PENDING);
+    
+    err = free_resource(manager, &rs,&could_alloc);
+    assert(!could_alloc);
+    assert(err == 0);
+    
+    for ( ; i < FIRST_TOTAL / 2; ++i )
+    {
+        if ( left_len == 0 )
+        {
+            break;
+        }
+        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.id   = (void *) 1;
+        err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
         left_len -= rs.cost;
     }
     
     assert(manager->get_currentversion(manager, (void *) 1) == 2);
     assert(0 == manager->tab->find(manager->tab, (void *) 1, &desc));
+//    printf("token_quota %ld\n",((dispatch_base_node_t *) desc)->token_inuse);
+    
     assert(((dispatch_base_node_t *) desc)->token_inuse == FIRST_TOTAL / 2);
-    printf("aaa %d",((dispatch_base_node_t *) desc)->token_quota);
     assert(((dispatch_base_node_t *) desc)->token_quota
            == FIRST_TOTAL / 2);
     assert(is_increased == false);
@@ -429,7 +553,7 @@ static void test_case_regular_rcvd_reduce()
         }
         rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
-        err = free_resource(manager, &rs);
+        err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
         left_len -= rs.cost;
     }
@@ -449,6 +573,7 @@ static void test_case_regular_rcvd_reduce()
 
 static void test_case_regular_reset()
 {
+    bool could_alloc;
     unsigned long  left_len = FIRST_TOTAL;
     int            i        = 0;
     int            err      = 0;
@@ -497,7 +622,7 @@ static void test_case_regular_reset()
         }
         rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
-        err = free_resource(manager, &rs);
+        err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
         left_len -= rs.cost;
     }
@@ -516,7 +641,7 @@ static void test_case_regular_reset()
         }
         rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
-        err = free_resource(manager, &rs);
+        err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
         left_len -= rs.cost;
     }
@@ -607,6 +732,7 @@ static void test_case_regular_rcvd_increase()
 
 static void test_case_regular_alloc_free()
 {
+    bool could_alloc = false;
     unsigned long  left_len = FIRST_TOTAL;
     int            i        = 0;
     int            err      = 0;
@@ -649,7 +775,7 @@ static void test_case_regular_alloc_free()
         }
         rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
-        err = free_resource(manager, &rs);
+        err = free_resource(manager, &rs, &could_alloc);
         assert(err == 0);
         left_len -= rs.cost;
     }
@@ -670,7 +796,7 @@ static void test_case_regular_alloc_free()
 static int
 check_alloc_resource(struct disp_desc_manager *manager, resource_t *rs)
 {
-    int  err   = QOS_ERROR_OK;
+    int  err;
     void *desc = NULL;
     assert(manager && rs && rs->cost);
     pthread_rwlock_rdlock(&manager->lck);
@@ -691,9 +817,10 @@ unlock_manager:
 
 static void test_case_regular_check_free()
 {
-    unsigned long  left_len = FIRST_TOTAL;
-    int            i        = 0;
-    int            err      = 0;
+    bool           could_alloc = false;
+    unsigned long  left_len    = FIRST_TOTAL;
+    int            i           = 0;
+    int            err         = 0;
     void           *desc;
     dispatch2app_t dta;
     dta.version     = 1;
@@ -738,8 +865,9 @@ static void test_case_regular_check_free()
         }
         rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
-        err = free_resource(manager, &rs);
+        err = free_resource(manager, &rs, &could_alloc);
         assert(err == 0);
+        assert(could_alloc);
         left_len -= rs.cost;
     }
     
@@ -790,6 +918,9 @@ void base_node_suit_init(test_frame_t *frame)
     
     suit.add_case(&suit, "test_case_regular_rcvd_reduce",
                   test_case_regular_rcvd_reduce);
+    
+    suit.add_case(&suit, "test_case_rcvd_reduce_alloc",
+                  test_case_rcvd_reduce_alloc);
     
     suit.add_case(&suit, "test_case_regular_rcvd_increase",
                   test_case_regular_rcvd_increase);

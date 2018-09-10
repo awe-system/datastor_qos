@@ -20,7 +20,6 @@ typedef struct dispatch_base_node
     unsigned long    token_quota_new;
     unsigned long    respond_step;
     long             version;
-    bool need_confirm;//
     pthread_rwlock_t lck;
     
     int (*check_alloc_from_base)(struct dispatch_base_node *desc, long cost);
@@ -30,7 +29,7 @@ typedef struct dispatch_base_node
     
     int (*try_alloc_from_base)(struct dispatch_base_node *base_node, long cost);
     
-    void (*free_to_base)(struct dispatch_base_node *base_node, long cost);
+    bool (*free_to_base)(struct dispatch_base_node *base_node, long cost);
     
     bool (*check_update_quota_version)(struct dispatch_base_node *base_node,
                                        unsigned long new_total, long new_ver,
