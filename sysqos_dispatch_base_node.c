@@ -169,7 +169,6 @@ static bool free_to_base(dispatch_base_node_t *desc, long cost)
          || desc->token_quota_target == desc->token_quota_new )
     {
         update_quota(desc);
-
     }
     
     if ( desc->token_inuse < desc->token_quota_target )

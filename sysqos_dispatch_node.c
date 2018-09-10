@@ -87,8 +87,11 @@ free_resource(struct dispatch_node *item, resource_list_t *rs,
     //NOTE:删除之前的资源数和当前版本的资源数无关
     if ( rip->Nodeid == item->fence_id )
     {
-        item->base_node.free_to_base(&item->base_node, rs->rs.cost);
-        resource_increased(item, got_permission_list);
+        bool is_increase = item->base_node.free_to_base(&item->base_node, rs->rs.cost);
+        if(is_increase)
+        {
+            resource_increased(item, got_permission_list);
+        }
     }
 }
 
@@ -198,7 +201,7 @@ int dispatch_node_init(dispatch_node_t *item, int version)
     item->reset            = reset;
     
     return err;
-    sysqos_spin_destroy(&item->lck);
+//    sysqos_spin_destroy(&item->lck);
 spin_init_failed:
     nodereq_list_exit(&item->lhead_nodereq);
 token_list_init_failed:

@@ -6,8 +6,6 @@
 #include <test_frame.h>
 #include "token_manager.h"
 
-//FIXME:lack of decrease
-
 #define TABLE_LEN 127
 
 #define TEST_RESOURCE_PER_PERMISSION 3
@@ -23,19 +21,16 @@ typedef struct test_context
     void            *queue[2 * MAX_QUEUE_NUM + 1];
     int             begin;
     int             end;
-    int             queue_len;
     int             err;
-    int             rs_num;//实际的rs_list的个数 在之后的都是这个串的后续部分
     resource_list_t rs[MAX_QUEUE_NUM * 3];
 } test_context_t;
 
 static void test_ctx_init(test_context_t *test, bool is_pending)
 {
     int i = 0;
-    test->begin = test->end = test->queue_len = 0;
+    test->begin = test->end = 0;
     test->err   = QOS_ERROR_OK;
     memset(test->queue, 0, (2 * MAX_QUEUE_NUM + 1) * sizeof(void *));
-    test->rs_num = MAX_QUEUE_NUM;
     for ( i = 0; i < MAX_QUEUE_NUM * 3; ++i )
     {
         long id = i % (MAX_QUEUE_NUM);
@@ -146,7 +141,7 @@ static bool test_are_alloc_small_total(token_reqgrp_manager_t *manager)
             dispatch_node_t
                     *item = container_of(pos, qos_container_item_t, list)->pri;
             assert(item);
-            if ( item->base_node.token_inuse > item->base_node.token_quota )
+            if ( item->base_node.token_inuse > item->base_node.token_quota_target )
             {
                 return false;
             }
@@ -555,58 +550,58 @@ static void test_case_rcvd_increased()
            RESET);
 }
 
-//
-//static void test_case_rcvd_decreased()
-//{
-//    static int      exe_time   = 0;
-//    test_context_t  test;
-//    int             i          = 0;
-//    token_reqgrp_t *token_grp = NULL;
-//
-//    test_ctx_init(&test, true);
-//
-//    for ( i = 0; i < MAX_QUEUE_NUM; ++i )
-//    {
-//        int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-//                                         &token_grp);
-//        assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
-//        if ( err == QOS_ERROR_OK )
-//        {
-//            test_enqueue(&test, token_grp);
-//        }
-//    }
-//
-//    test_check_snd_buf_legal(manager, 0, MIN_RS_NUM * 2, MIN_RS_NUM);
-//    assert(test_are_alloc_small_total(manager));
-//    test_rcvd_increased(manager, &test);
-//    test_check_snd_buf_legal(manager, 1, 0, MIN_RS_NUM * 3);
-//    assert(test_are_empty(manager));
-//    test_rcvd_decreased(manager, &test);
-//    assert(!test_are_alloc_small_total(manager));
-//    test_check_snd_buf_legal(manager, 2, 0, MIN_RS_NUM * 3);
-//    i = 0;
-//    while ( test.begin != test.end )
-//    {
-//        token_grp = (token_reqgrp_t *) test_dequeue(&test);
-//        manager->put_token_reqgrp(manager, token_grp, NULL);
-//        ++i;
-//    }
-//    assert(i == MAX_QUEUE_NUM);
-//
-//#ifdef CACHE_OPEN_CNT
-//    assert(manager->resource_cache.alloc_cnt ==
-//           manager->resource_cache.free_cnt);
-//    assert(manager->token_grp_cache.alloc_cnt ==
-//           manager->token_grp_cache.free_cnt);
-//    assert(manager->app_node_table->cache.alloc_cnt ==
-//           manager->app_node_table->cache.free_cnt + MAX_QUEUE_NUM);
-//    assert(manager->manager_item_cache.alloc_cnt ==
-//           manager->manager_item_cache.free_cnt + MAX_QUEUE_NUM);
-//#endif
-//    test_rcvd_reset(manager, &test);
-//    printf("[test_case_rcvd_decreased for NO.%d] %s[OK]%s\n", ++exe_time, GREEN,
-//           RESET);
-//}
+
+static void test_case_rcvd_decreased()
+{
+    static int      exe_time   = 0;
+    test_context_t  test;
+    int             i          = 0;
+    token_reqgrp_t *token_grp = NULL;
+
+    test_ctx_init(&test, true);
+
+    for ( i = 0; i < MAX_QUEUE_NUM; ++i )
+    {
+        int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
+                                         &token_grp);
+        assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
+        if ( err == QOS_ERROR_OK )
+        {
+            test_enqueue(&test, token_grp);
+        }
+    }
+
+    test_check_snd_buf_legal(manager, 0, MIN_RS_NUM * 2, MIN_RS_NUM);
+    assert(test_are_alloc_small_total(manager));
+    test_rcvd_increased(manager, &test);
+    test_check_snd_buf_legal(manager, 1, 0, MIN_RS_NUM * 3);
+    assert(test_are_empty(manager));
+    test_rcvd_decreased(manager, &test);
+    assert(test_are_alloc_small_total(manager));
+    test_check_snd_buf_legal(manager, 2, 0, MIN_RS_NUM * 3);
+    i = 0;
+    while ( test.begin != test.end )
+    {
+        token_grp = (token_reqgrp_t *) test_dequeue(&test);
+        manager->put_token_reqgrp(manager, token_grp, NULL);
+        ++i;
+    }
+    assert(i == MAX_QUEUE_NUM);
+
+#ifdef CACHE_OPEN_CNT
+    assert(manager->resource_cache.alloc_cnt ==
+           manager->resource_cache.free_cnt);
+    assert(manager->token_grp_cache.alloc_cnt ==
+           manager->token_grp_cache.free_cnt);
+    assert(manager->app_node_table->cache.alloc_cnt ==
+           manager->app_node_table->cache.free_cnt + MAX_QUEUE_NUM);
+    assert(manager->manager_item_cache.alloc_cnt ==
+           manager->manager_item_cache.free_cnt + MAX_QUEUE_NUM);
+#endif
+    test_rcvd_reset(manager, &test);
+    printf("[test_case_rcvd_decreased for NO.%d] %s[OK]%s\n", ++exe_time, GREEN,
+           RESET);
+}
 
 static void test_case_rcvd_reset()
 {
@@ -978,12 +973,12 @@ void token_manager_suit_init(test_frame_t *frame)
                   test_case_rcvd_increased);
     suit.add_case(&suit, "test_case_rcvd_increased 2nd",
                   test_case_rcvd_increased);
-//    //FIXME: mor
-//    suit.add_case(&suit, "test_case_rcvd_dereased 1st",
-//                  test_case_rcvd_decreased);
-//    //FIXME: mor
-//    suit.add_case(&suit, "test_case_rcvd_dereased 2nd",
-//                  test_case_rcvd_decreased);
+
+    suit.add_case(&suit, "test_case_rcvd_dereased 1st",
+                  test_case_rcvd_decreased);
+
+    suit.add_case(&suit, "test_case_rcvd_dereased 2nd",
+                  test_case_rcvd_decreased);
     
     suit.add_case(&suit, "test_case_token_grp_outof_memory 1st",
                   test_case_token_grp_outof_memory);
