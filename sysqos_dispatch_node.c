@@ -24,7 +24,7 @@ permission_list_if_final_by_rs_list(struct list_head *list)
 static void resource_increased(dispatch_node_t *item,
                                struct list_head *got_permission_list)
 {
-    int               err              = QOS_ERROR_OK;
+    int               err;
     struct list_head  *permission_list = NULL;
     nodereq_list_t *tokens          = &item->lhead_nodereq;
     dispatch_base_node_t  *desc            = &item->base_node;
@@ -100,7 +100,7 @@ static int
 alloc_resource(struct dispatch_node *item, resource_list_t *rs)
 {
     assert(item && rs);
-    int         err  = QOS_ERROR_OK;
+    int         err;
     token_req_t *rip = app_token_by_list(
             &rs->list);
     rip->Nodeid = item->fence_id;
@@ -172,7 +172,7 @@ void dispatch_node_exit(dispatch_node_t *item)
 
 int dispatch_node_init(dispatch_node_t *item, int version)
 {
-    int err = QOS_ERROR_OK;
+    int err;
     assert(item);
     
     err = dispatch_base_node_init(&item->base_node);

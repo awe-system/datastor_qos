@@ -5,7 +5,7 @@
 #ifndef QOS_SAFE_RW_LIST_H
 #define QOS_SAFE_RW_LIST_H
 
-#include "list_head.h"
+#include "sysqos_type.h"
 #include "memory_cache.h"
 #include "sysqos_common.h"
 #include <sys/types.h>
@@ -39,7 +39,6 @@ typedef struct safe_rw_list
     void (*for_each_do)(struct safe_rw_list *list,void *ctx, for_each_dofunc_t dofunc);
     /***********************************************************/
 #ifdef SAFE_RW_LIST_TEST
-    void (*dump)(struct safe_rw_list *list);
 #endif
     /******************************************************/
     compare_id_func compare;
@@ -53,8 +52,6 @@ int safe_rw_list_init(safe_rw_list_t *list, memory_cache_t *item_cache);
 
 void safe_rw_list_exit(safe_rw_list_t *list);
 
-
-void test_safe_rw_list();
 
 #ifdef __cplusplus
 }

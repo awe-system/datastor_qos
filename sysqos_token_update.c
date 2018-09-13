@@ -3,7 +3,6 @@
 //
 #include <pthread.h>
 #include <assert.h>
-#include "list_head.h"
 #include "sysqos_token_update.h"
 #include "sysqos_dispatch_manager.h"
 
@@ -24,8 +23,8 @@ static void add_resource(struct token_update_ctx *ctx, app_node_t *node)
     insert_by_weight(ctx, updatenode);
     ctx->token_total += updatenode->tmp_token_quota;
     ctx->token_static += updatenode->token_base;
-    updatenode->tmp_token_quota -=
-            pthread_rwlock_unlock(&ctx->lck);
+    updatenode->tmp_token_quota -= updatenode->token_base;
+    pthread_rwlock_unlock(&ctx->lck);
 }
 
 static inline unsigned long update_token_left_base(struct token_update_ctx *ctx)
@@ -50,11 +49,17 @@ static unsigned long update_node_quota(struct list_head *pos,
     unsigned long new_real_quota = 0;
     update_node_t *updatenode    = update_node_by_list(pos);
     app_node_t    *node          = app_node_by_update(updatenode);
-    assert(total_weight > 0);
-    
-    updatenode->tmp_token_quota =
-            token_total * updatenode->weight / total_weight
-            + updatenode->token_base;
+  
+    if(total_weight > 0)
+    {
+        updatenode->tmp_token_quota =
+                token_total * updatenode->weight / total_weight
+                + updatenode->token_base;
+    }
+    else
+    {
+        updatenode->tmp_token_quota = updatenode->token_base;
+    }
     
     new_real_quota = set_quota_new(manager, updatenode->tmp_token_quota, node);
     return new_real_quota - updatenode->token_base;
@@ -93,8 +98,9 @@ static void update(struct token_update_ctx *ctx,
     unsigned long    token_left   = 0;
     unsigned long    token_total  = 0;
     unsigned long    total_weight = 0;
-    
-    
+    if(ctx->total_weight == 0)
+        return;
+    ctx->token_total += manager->tokens.token_free;
     token_total = token_left = update_token_left_base(ctx);
     
     total_weight = update_weight(ctx);

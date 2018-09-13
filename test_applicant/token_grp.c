@@ -3,13 +3,10 @@
 //
 
 
-#include <CUnit/CUError.h>
-#include <test_frame.h>
-#include "base_node.h"
 #include "token_grp.h"
 
 #define MAX_RESOURCE_NUM             15
-#define MAX_RESOURCE_PER_PERMISSION  10
+//#define MAX_RESOURCE_PER_PERMISSION  10
 
 static memory_cache_t cache_static;
 static memory_cache_t *cache      = &cache_static;
@@ -24,7 +21,7 @@ _fill_rs_list_head(long len, resource_list_t rs[], struct list_head *rs_list)
     LISTHEAD_INIT(rs_list);
     for ( i = 0; i < len; ++i )
     {
-        rs[i].rs.cost = i + 1;
+        rs[i].rs.cost = (unsigned long) (i + 1);
         rs[i].rs.id   = (void *) i;
         LISTHEAD_INIT(&rs[i].list);
         list_add(&rs[i].list, rs_list);
@@ -73,7 +70,6 @@ static void test_case_init_got()
     {
         token_req_t
                 *rip = app_token_by_grp_list(pos);
-        int     err  = QOS_ERROR_OK;
         assert(rip->stat == app_token_stat_init);
         err = permission->to_got(permission, rip);
         assert(rip->stat == app_token_stat_got);
@@ -248,7 +244,7 @@ static void test_case_concurrency_got()
         if ( ++i % 2 == 0 )
         {
             assert(rip->stat == app_token_stat_init);
-            err = permission->to_got(permission, rip);
+            permission->to_got(permission, rip);
             assert(rip->stat == app_token_stat_got);
         }
         else
@@ -291,13 +287,13 @@ static void test_case_concurrency_failed()
         if ( ++i % 4 == 0 )
         {
             assert(rip->stat == app_token_stat_init);
-            err = permission->to_got(permission, rip);
+            permission->to_got(permission, rip);
             assert(rip->stat == app_token_stat_got);
         }
         else if ( i % 4 == 1 )
         {
             assert(rip->stat == app_token_stat_init);
-            err = permission->to_failed(permission, rip);
+            permission->to_failed(permission, rip);
             assert(rip->stat == app_token_stat_failed);
         }
         else if ( i % 4 == 2 )
@@ -345,13 +341,13 @@ static void test_case_concurrency_got_or_failed()
         if ( ++i % 4 == 0 )
         {
             assert(rip->stat == app_token_stat_init);
-            err = permission->to_got(permission, rip);
+            permission->to_got(permission, rip);
             assert(rip->stat == app_token_stat_got);
         }
         else if ( i % 4 == 1 )
         {
             assert(rip->stat == app_token_stat_init);
-            err = permission->to_failed(permission, rip);
+            permission->to_failed(permission, rip);
             assert(rip->stat == app_token_stat_failed);
         }
         else if ( i % 4 == 2 )
@@ -382,7 +378,7 @@ static void test_case_concurrency_got_or_failed()
 static int test_init()
 {
     int err = 0;
-    printf(YELLOW"--------------test_init----------------------:\n"RESET);
+    printf(YELLOW"--------------test_context_init----------------------:\n"RESET);
     
     err = memory_cache_init(cache, sizeof(struct token_req),
                             MAX_RESOURCE_NUM);

@@ -23,13 +23,12 @@ set(SOURCE_FILES
         sysqos_token_global.h sysqos_app_node.c sysqos_app_node.h
         sysqos_token_update.c sysqos_token_update.h sysqos_update_node.c
         sysqos_update_node.h
-        sysqos_waitincrease_list.c sysqos_waitincrease_list.h count_controller.c count_controller.h fence_executor.c fence_executor.h sysqos_type.h)
+        sysqos_waitincrease_list.c sysqos_waitincrease_list.h count_controller.c
+        count_controller.h fence_executor.c fence_executor.h sysqos_type.h)
 
 include_directories("test_lib")
 include_directories(".")
 include_directories("/usr/local/include")
-
-
 
 add_library(libtest test_lib/sysqos_test_lib.c test_lib/sysqos_test_lib.h test_lib/test_frame.c test_lib/test_frame.h sysqos_type.h)
 target_link_libraries(libtest pthread)
@@ -40,8 +39,18 @@ target_link_libraries(libqos pthread libtest)
 add_compile_options("-fprofile-arcs")
 add_compile_options("-ftest-coverage")
 
-add_executable(test_app2disp ${CunitSource} test_app2dispatch/app2disp_test.c test_app2dispatch/test_memory_cache.c test_app2dispatch/test_memory_cache.h test_app2dispatch/test_rw_list.c test_app2dispatch/test_rw_list.h test_app2dispatch/test_hashtab.c test_app2dispatch/test_hashtab.h ${CUnit})
-target_link_libraries(test_app2disp pthread  libqos libtest cunit gcov)
+add_executable(test_app2disp ${SOURCE_FILES} ${CunitSource} test_app2dispatch/app2disp_test.c
+        test_app2dispatch/test_memory_cache.c test_app2dispatch/test_memory_cache.h
+        test_app2dispatch/test_rw_list.c test_app2dispatch/test_rw_list.h
+        test_app2dispatch/test_hashtab.c test_app2dispatch/test_hashtab.h ${CUnit}
 
-add_executable(test_app ${CunitSource} test_applicant/app_test.c test_applicant/base_node.c test_applicant/base_node.h test_lib/test_frame.c test_lib/test_frame.h test_applicant/node_inapp.c test_applicant/node_inapp.h test_applicant/wait_token_list.c test_applicant/wait_token_list.h test_applicant/token_grp.c test_applicant/token_grp.h test_applicant/token_manager.c test_applicant/token_manager.h sysqos_type.h)
-target_link_libraries(test_app pthread  libqos libtest cunit gcov)
+        test_applicant/base_node.c test_applicant/base_node.h
+        test_applicant/node_inapp.c test_applicant/node_inapp.h
+        test_applicant/wait_token_list.c test_applicant/wait_token_list.h
+        test_applicant/token_grp.c test_applicant/token_grp.h
+        test_applicant/token_manager.c test_applicant/token_manager.h
+
+        test_dispatch/node_indisp.c test_dispatch/node_indisp.h
+        test_dispatch/wait_increase.c test_dispatch/wait_increase.h
+        test_dispatch/token_global.c test_dispatch/token_global.h test_dispatch/dispatch_manager.c test_dispatch/dispatch_manager.h)
+target_link_libraries(test_app2disp pthread  libtest cunit gcov)

@@ -3,7 +3,6 @@
 //
 
 
-#include <test_frame.h>
 #include "token_manager.h"
 
 #define TABLE_LEN 127
@@ -23,7 +22,7 @@ typedef struct test_context
     int             end;
     int             err;
     resource_list_t rs[MAX_QUEUE_NUM * 3];
-} test_context_t;
+}                             test_context_t;
 
 static void test_ctx_init(test_context_t *test, bool is_pending)
 {
@@ -60,7 +59,7 @@ static void test_ctx_init(test_context_t *test, bool is_pending)
 static void test_enqueue(test_context_t *test, void *val)
 {
     test->queue[test->end] = val;
-    if ( ++test->end > 2*MAX_QUEUE_NUM )
+    if ( ++test->end > 2 * MAX_QUEUE_NUM )
     {
         test->end = 0;
     }
@@ -75,7 +74,7 @@ static void *test_dequeue(test_context_t *test)
         return res;
     }
     res = test->queue[test->begin];
-    if ( ++test->begin > 2* MAX_QUEUE_NUM )
+    if ( ++test->begin > 2 * MAX_QUEUE_NUM )
     {
         test->begin = 0;
     }
@@ -84,8 +83,7 @@ static void *test_dequeue(test_context_t *test)
 
 static void test_token_grp_got(void *token_grp, void *pri, int err)
 {
-    token_reqgrp_t *p    = (token_reqgrp_t *) token_grp;
-    test_context_t  *test = pri;
+    test_context_t *test = pri;
     if ( err )
     {
         test->err = err;
@@ -96,7 +94,6 @@ static void test_token_grp_got(void *token_grp, void *pri, int err)
 static applicant_event_ops_t test_app_event =
                                      {
                                              .token_grp_got = test_token_grp_got,
-                                             .node_changed = NULL
                                      };
 
 static msg_ops_t test_msg_ops =
@@ -104,7 +101,6 @@ static msg_ops_t test_msg_ops =
                                  .snd_msg = NULL,
                                  .compare = test_compare,
                                  .hash_id = test_hash,
-                                 .node_offline_done = NULL,
                          };
 
 
@@ -141,7 +137,8 @@ static bool test_are_alloc_small_total(token_reqgrp_manager_t *manager)
             dispatch_node_t
                     *item = container_of(pos, qos_container_item_t, list)->pri;
             assert(item);
-            if ( item->base_node.token_inuse > item->base_node.token_quota_target )
+            if ( item->base_node.token_inuse >
+                 item->base_node.token_quota_target )
             {
                 return false;
             }
@@ -167,7 +164,7 @@ static void test_check_snd_buf_legal(token_reqgrp_manager_t *manager,
                                                       list);
             dispatch_node_t
                                  *item           = container_item->pri;
-            app2dispatch_t        atd;
+            app2dispatch_t       atd;
             assert(item);
             assert(sizeof(app2dispatch_t) == manager->msg_event
                     .snd_msg_len(&manager->msg_event, container_item->id));
@@ -192,9 +189,9 @@ static void test_check_snd_buf_legal(token_reqgrp_manager_t *manager,
 
 static void test_case_get_token_grp_right_now()
 {
-    static int      exe_time   = 0;
-    test_context_t  test;
-    int             i          = 0;
+    static int     exe_time   = 0;
+    test_context_t test;
+    unsigned long  i          = 0;
     token_reqgrp_t *token_grp = NULL;
     
     test_ctx_init(&test, false);
@@ -202,12 +199,9 @@ static void test_case_get_token_grp_right_now()
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+                                            &token_grp);
         assert(err == QOS_ERROR_OK);
-        if ( err == QOS_ERROR_OK )
-        {
-            test_enqueue(&test, token_grp);
-        }
+        test_enqueue(&test, token_grp);
     }
     assert(test_are_empty(manager));
     i = 0;
@@ -235,10 +229,10 @@ static void test_case_get_token_grp_right_now()
 
 static void test_case_get_token_grp_pending()
 {
-    static int      exe_time      = 0;
-    test_context_t  test;
-    int             i             = 0;
-    bool            pending_exist = false;
+    static int     exe_time      = 0;
+    test_context_t test;
+    int            i             = 0;
+    bool           pending_exist = false;
     token_reqgrp_t *token_grp    = NULL;
     
     test_ctx_init(&test, true);
@@ -246,7 +240,7 @@ static void test_case_get_token_grp_pending()
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+                                            &token_grp);
         
         assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
         if ( err == QOS_ERROR_OK )
@@ -285,11 +279,11 @@ static void test_case_get_token_grp_pending()
 
 static void test_case_token_grp_outof_memory()
 {
-    static int      exe_time      = 0;
-    test_context_t  test;
-    int             i             = 0;
-    int             j             = 0;
-    bool            pending_exist = false;
+    static int     exe_time      = 0;
+    test_context_t test;
+    int            i             = 0;
+    int            j             = 0;
+    bool           pending_exist = false;
     token_reqgrp_t *token_grp    = NULL;
     
     token_reqgrp_manager_exit(manager);
@@ -304,8 +298,8 @@ static void test_case_token_grp_outof_memory()
     
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
-        int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+        err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
+                                  &token_grp);
         if ( err == QOS_ERROR_MEMORY )
         {
             while ( test.begin != test.end )
@@ -337,7 +331,6 @@ static void test_case_token_grp_outof_memory()
         ++j;
     }
     assert(j == MAX_QUEUE_NUM);
-
 #ifdef CACHE_OPEN_CNT
     assert(manager->resource_cache.alloc_cnt ==
            manager->resource_cache.free_cnt);
@@ -348,6 +341,7 @@ static void test_case_token_grp_outof_memory()
     assert(manager->manager_item_cache.alloc_cnt ==
            manager->manager_item_cache.free_cnt + MAX_QUEUE_NUM);
 #endif
+    token_reqgrp_manager_exit(manager);
     err = token_reqgrp_manager_init(manager, TABLE_LEN, MAX_PERMISSION_NUM,
                                     MAX_RESOURCE_NUM, MAX_NODE_NUM);
     assert(err == 0);
@@ -361,11 +355,11 @@ static void test_case_token_grp_outof_memory()
 
 static void test_case_resource_outof_memory()
 {
-    static int      exe_time      = 0;
-    test_context_t  test;
-    int             i             = 0;
-    int             j             = 0;
-    bool            pending_exist = false;
+    static int     exe_time      = 0;
+    test_context_t test;
+    int            i             = 0;
+    int            j             = 0;
+    bool           pending_exist = false;
     token_reqgrp_t *token_grp    = NULL;
     
     token_reqgrp_manager_exit(manager);
@@ -380,8 +374,8 @@ static void test_case_resource_outof_memory()
     
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
-        int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+        err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
+                                  &token_grp);
         if ( err == QOS_ERROR_MEMORY )
         {
             while ( test.begin != test.end )
@@ -438,19 +432,19 @@ static void test_case_resource_outof_memory()
 
 
 static void
-test_rcvd_increased(token_reqgrp_manager_t *manager, test_context_t *test)
+test_rcvd_increased(token_reqgrp_manager_t *manager)
 {
     int i = 0;
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         dispatch_node_t *item;
-        void                     **ppitem = (void **) &item;
-        long                     id       = i;
-        dispatch2app_t            dta;
-        int                      err      = manager->app_node_table
+        void            **ppitem = (void **) &item;
+        long            id       = i;
+        dispatch2app_t  dta;
+        int             err      = manager->app_node_table
                 ->find(manager->app_node_table, (void *) id, ppitem);
         assert(err == 0);
-        dta.version   = item->base_node.get_version(&item->base_node) + 1;
+        dta.version     = item->base_node.get_version(&item->base_node) + 1;
         dta.token_quota = MAX_QUEUE_NUM;
         manager->msg_event
                 .rcvd(&manager->msg_event, (void *) id, sizeof(dispatch2app_t),
@@ -459,19 +453,19 @@ test_rcvd_increased(token_reqgrp_manager_t *manager, test_context_t *test)
 }
 
 static void
-test_rcvd_decreased(token_reqgrp_manager_t *manager, test_context_t *test)
+test_rcvd_decreased(token_reqgrp_manager_t *manager)
 {
     int i = 0;
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         dispatch_node_t *item;
-        void                     **ppitem = (void **) &item;
-        long                     id       = i;
-        dispatch2app_t            dta;
-        int                      err      = manager->app_node_table
+        void            **ppitem = (void **) &item;
+        long            id       = i;
+        dispatch2app_t  dta;
+        int             err      = manager->app_node_table
                 ->find(manager->app_node_table, (void *) id, ppitem);
         assert(err == 0);
-        dta.version   = item->base_node.get_version(&item->base_node) + 1;
+        dta.version     = item->base_node.get_version(&item->base_node) + 1;
         dta.token_quota = MIN_RS_NUM;
         manager->msg_event
                 .rcvd(&manager->msg_event, (void *) id, sizeof(dispatch2app_t),
@@ -480,20 +474,21 @@ test_rcvd_decreased(token_reqgrp_manager_t *manager, test_context_t *test)
 }
 
 static void
-test_rcvd_reset(token_reqgrp_manager_t *manager, test_context_t *test)
+test_rcvd_reset(token_reqgrp_manager_t *manager)
 {
     int i = 0;
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         dispatch_node_t *item;
-        void                     **ppitem = (void **) &item;
-        long                     id       = i;
-        dispatch2app_t            dta;
-        int                      err      = manager->app_node_table->find(manager->app_node_table,
-                                                               (void *) id,
-                                                               ppitem);
+        void            **ppitem = (void **) &item;
+        long            id       = i;
+        dispatch2app_t  dta;
+        int             err      = manager->app_node_table
+                ->find(manager->app_node_table,
+                       (void *) id,
+                       ppitem);
         assert(err == 0);
-        dta.version   = 0;
+        dta.version     = 0;
         dta.token_quota = 0;
         manager->msg_event
                 .rcvd(&manager->msg_event, (void *) id, sizeof(dispatch2app_t),
@@ -503,9 +498,9 @@ test_rcvd_reset(token_reqgrp_manager_t *manager, test_context_t *test)
 
 static void test_case_rcvd_increased()
 {
-    static int      exe_time   = 0;
-    test_context_t  test;
-    int             i          = 0;
+    static int     exe_time   = 0;
+    test_context_t test;
+    int            i          = 0;
     token_reqgrp_t *token_grp = NULL;
     
     test_ctx_init(&test, true);
@@ -513,7 +508,7 @@ static void test_case_rcvd_increased()
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+                                            &token_grp);
         assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
         if ( err == QOS_ERROR_OK )
         {
@@ -522,7 +517,7 @@ static void test_case_rcvd_increased()
     }
     
     test_check_snd_buf_legal(manager, 0, MIN_RS_NUM * 2, MIN_RS_NUM);
-    test_rcvd_increased(manager, &test);
+    test_rcvd_increased(manager);
     test_check_snd_buf_legal(manager, 1, 0, MIN_RS_NUM * 3);
     assert(test_are_empty(manager));
     
@@ -545,7 +540,7 @@ static void test_case_rcvd_increased()
     assert(manager->manager_item_cache.alloc_cnt ==
            manager->manager_item_cache.free_cnt + MAX_QUEUE_NUM);
 #endif
-    test_rcvd_reset(manager, &test);
+    test_rcvd_reset(manager);
     printf("[test_case_rcvd_increased for NO.%d] %s[OK]%s\n", ++exe_time, GREEN,
            RESET);
 }
@@ -553,30 +548,30 @@ static void test_case_rcvd_increased()
 
 static void test_case_rcvd_decreased()
 {
-    static int      exe_time   = 0;
-    test_context_t  test;
-    int             i          = 0;
+    static int     exe_time   = 0;
+    test_context_t test;
+    int            i          = 0;
     token_reqgrp_t *token_grp = NULL;
-
+    
     test_ctx_init(&test, true);
-
+    
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+                                            &token_grp);
         assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
         if ( err == QOS_ERROR_OK )
         {
             test_enqueue(&test, token_grp);
         }
     }
-
+    
     test_check_snd_buf_legal(manager, 0, MIN_RS_NUM * 2, MIN_RS_NUM);
     assert(test_are_alloc_small_total(manager));
-    test_rcvd_increased(manager, &test);
+    test_rcvd_increased(manager);
     test_check_snd_buf_legal(manager, 1, 0, MIN_RS_NUM * 3);
     assert(test_are_empty(manager));
-    test_rcvd_decreased(manager, &test);
+    test_rcvd_decreased(manager);
     assert(test_are_alloc_small_total(manager));
     test_check_snd_buf_legal(manager, 2, 0, MIN_RS_NUM * 3);
     i = 0;
@@ -598,16 +593,16 @@ static void test_case_rcvd_decreased()
     assert(manager->manager_item_cache.alloc_cnt ==
            manager->manager_item_cache.free_cnt + MAX_QUEUE_NUM);
 #endif
-    test_rcvd_reset(manager, &test);
+    test_rcvd_reset(manager);
     printf("[test_case_rcvd_decreased for NO.%d] %s[OK]%s\n", ++exe_time, GREEN,
            RESET);
 }
 
 static void test_case_rcvd_reset()
 {
-    static int      exe_time   = 0;
-    test_context_t  test;
-    int             i          = 0;
+    static int     exe_time   = 0;
+    test_context_t test;
+    int            i          = 0;
     token_reqgrp_t *token_grp = NULL;
     
     test_ctx_init(&test, true);
@@ -615,7 +610,7 @@ static void test_case_rcvd_reset()
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+                                            &token_grp);
         assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
         if ( err == QOS_ERROR_OK )
         {
@@ -624,10 +619,10 @@ static void test_case_rcvd_reset()
     }
     test_check_snd_buf_legal(manager, -1, MIN_RS_NUM * 2, MIN_RS_NUM);
     assert(test_are_alloc_small_total(manager));
-    test_rcvd_increased(manager, &test);
+    test_rcvd_increased(manager);
     test_check_snd_buf_legal(manager, -1, 0, MIN_RS_NUM * 3);
     assert(test_are_empty(manager));
-    test_rcvd_reset(manager, &test);
+    test_rcvd_reset(manager);
     assert(!test_are_alloc_small_total(manager));
     test_check_snd_buf_legal(manager, 0, 0, MIN_RS_NUM * 3);
     
@@ -713,9 +708,9 @@ partfail_put_permission(token_reqgrp_manager_t *manager,
 
 static void test_case_put_partfailed()
 {
-    static int      exe_time    = 0;
-    test_context_t  test;
-    int             i           = 0;
+    static int     exe_time    = 0;
+    test_context_t test;
+    int            i           = 0;
     token_reqgrp_t *permission = NULL;
     
     test_ctx_init(&test, true);
@@ -723,7 +718,7 @@ static void test_case_put_partfailed()
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &permission);
+                                            &permission);
         assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
         if ( err == QOS_ERROR_OK )
         {
@@ -762,16 +757,16 @@ static void test_case_put_partfailed()
 
 static void test_case_put_fullfailed()
 {
-    static int      exe_time    = 0;
-    test_context_t  test;
-    int             i           = 0;
+    static int     exe_time    = 0;
+    test_context_t test;
+    int            i           = 0;
     token_reqgrp_t *permission = NULL;
     
     test_ctx_init(&test, true);
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &permission);
+                                            &permission);
         assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
         if ( err == QOS_ERROR_OK )
         {
@@ -781,7 +776,7 @@ static void test_case_put_fullfailed()
     assert(test_are_alloc_small_total(manager));
     assert(!test_are_empty(manager));
     
-    test_rcvd_reset(manager, &test);
+    test_rcvd_reset(manager);
     test_check_snd_buf_legal(manager, 0, MIN_RS_NUM * 2, MIN_RS_NUM);
     i = 0;
     while ( test.begin != test.end )
@@ -795,7 +790,7 @@ static void test_case_put_fullfailed()
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &permission);
+                                            &permission);
         assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
         if ( err == QOS_ERROR_OK )
         {
@@ -832,9 +827,9 @@ static void test_case_put_fullfailed()
 
 static void test_case_put_failed_getagain()
 {
-    static int      exe_time   = 0;
-    test_context_t  test;
-    int             i          = 0, cnt = 0;
+    static int     exe_time   = 0;
+    test_context_t test;
+    int            i          = 0, cnt = 0;
     token_reqgrp_t *token_grp = NULL;
     
     test_ctx_init(&test, true);
@@ -842,7 +837,7 @@ static void test_case_put_failed_getagain()
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+                                            &token_grp);
         assert(err == QOS_ERROR_OK || err == QOS_ERROR_PENDING);
         if ( err == QOS_ERROR_OK )
         {
@@ -870,7 +865,7 @@ static void test_case_put_failed_getagain()
     for ( i = 0; i < MAX_QUEUE_NUM; ++i )
     {
         int err = manager->get_token_reqgrp(manager, &test.rs[i], &test,
-                                         &token_grp);
+                                            &token_grp);
         if ( err == QOS_ERROR_MEMORY )
         {
             while ( test.begin != test.end )
@@ -931,7 +926,8 @@ static void test_case_init_exit(token_reqgrp_manager_t *manager)
            manager->resource_cache.free_cnt);
     assert(manager->token_grp_cache.alloc_cnt ==
            manager->token_grp_cache.free_cnt);
-    assert(manager->app_node_table->cache.alloc_cnt == manager->app_node_table->cache.free_cnt);
+    assert(manager->app_node_table->cache.alloc_cnt ==
+           manager->app_node_table->cache.free_cnt);
     assert(manager->manager_item_cache.alloc_cnt ==
            manager->manager_item_cache.free_cnt);
 #endif
@@ -940,7 +936,7 @@ static void test_case_init_exit(token_reqgrp_manager_t *manager)
 
 static int test_init()
 {
-    printf(YELLOW"--------------test_init------------:\n"RESET);
+    printf(YELLOW"--------------test_context_init------------:\n"RESET);
     test_case_init_exit(manager);
     return CUE_SUCCESS;
 }
@@ -962,13 +958,13 @@ void token_manager_suit_init(test_frame_t *frame)
                   test_case_get_token_grp_right_now);
     suit.add_case(&suit, "test_case_get_token_grp_right_now 2nd",
                   test_case_get_token_grp_right_now);
-    
+
     suit.add_case(&suit, "test_case_get_token_grp_pending 1st",
                   test_case_get_token_grp_pending);
     suit.add_case(&suit, "test_case_get_token_grp_pending 2nd",
                   test_case_get_token_grp_pending);
-    
-    
+
+
     suit.add_case(&suit, "test_case_rcvd_increased 1st",
                   test_case_rcvd_increased);
     suit.add_case(&suit, "test_case_rcvd_increased 2nd",
@@ -979,7 +975,7 @@ void token_manager_suit_init(test_frame_t *frame)
 
     suit.add_case(&suit, "test_case_rcvd_dereased 2nd",
                   test_case_rcvd_decreased);
-    
+//
     suit.add_case(&suit, "test_case_token_grp_outof_memory 1st",
                   test_case_token_grp_outof_memory);
     suit.add_case(&suit, "test_case_token_grp_outof_memory 2nd",
@@ -991,7 +987,7 @@ void token_manager_suit_init(test_frame_t *frame)
                   test_case_resource_outof_memory);
     
     suit.add_case(&suit, "test_case_rcvd_reset 1st", test_case_rcvd_reset);
-    suit.add_case(&suit, "test_case_rcvd_reset 2nd",test_case_rcvd_reset);
+    suit.add_case(&suit, "test_case_rcvd_reset 2nd", test_case_rcvd_reset);
     
     suit.add_case(&suit, "test_case_put_partfailed 1st",
                   test_case_put_partfailed);

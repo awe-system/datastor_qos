@@ -7,13 +7,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "stdbool.h"
-#include "list_head.h"
+#include <stdbool.h>
+#include "sysqos_type.h"
 
 /**********************************************************************************/
-#define NODE_TABLE_HASH_LEN             127
-#define MIN_RS_NUM                      10
-#define MMAX_RESPOND_STEP               5
+#define NODE_TABLE_HASH_LEN             127UL
+#define MIN_RS_NUM                      10UL
+#define MMAX_RESPOND_STEP               5UL
 /***qos_error.h********************************************************************/
 enum
 {
@@ -21,10 +21,10 @@ enum
     QOS_ERROR_PENDING,
     QOS_ERROR_FAILEDNODE,
     QOS_ERROR_TOOBIGCOST,
-    QOS_ERROR_TOOSMALLBUF,
-    QOS_ERROR_NULLPOINTER,
-    QOS_ERROR_TIMEOUT,
-    QOS_ERROR_NOSUCHSOURCE,
+//    QOS_ERROR_TOOSMALLBUF,
+//    QOS_ERROR_NULLPOINTER,
+//    QOS_ERROR_TIMEOUT,
+//    QOS_ERROR_NOSUCHSOURCE,
     QOS_ERROR_MEMORY,
     QOS_ERROR_TOO_MANY_NODES,
     QOS_ERROR_UNKNOWN = 99,
@@ -89,7 +89,7 @@ typedef struct msg_ops
     * 输出参数：无
     * 返回值：无
     * */
-    void (*node_offline_done)(void *id);
+//    void (*node_offline_done)(void *id);
     
     /*
      * 功能描述：向id对应的结点发送消息
@@ -180,24 +180,7 @@ typedef struct msg_event_ops
 
 
 /***qos_token.h*******************************************************************/
-/*
- * 功能描述：获取存储在token当中调用者模块上下文
- * 输入参数：
- *        void *token 令牌指针
- * 输出参数：无
- * 返回值：  存储在token当中的调用者模块的上下文内容
- * */
-void *get_token_private(void *token);
 
-/*
- * 功能描述：向token设置调用者模块上下文
- * 输入参数：
- *        void *token 令牌指针
- *        void *pri   调用者模块上下文指针 此函数不维护该指针内容所指向地址的生存周期
- * 输出参数：无
- * 返回值：  无
- * */
-void set_token_private(void *token, void *pri);
 /*********************************************************************************/
 
 /***qos_client.h******************************************************************/
@@ -230,31 +213,12 @@ typedef struct applicant_event_ops
      *       =true  需要继续传递给下一个失败未put的token
      *       =false 不需要传递给其他的token
      * */
-    bool (*node_changed)(void *token, void *pri, void *node);
 } applicant_event_ops_t;
 
 
 /*向资源申请端提供的操作集*/
 typedef struct applicant_ops
 {
-    /*
-     * 功能描述：一次性获取资源列表里所有资源的访问令牌
-     * 输入参数：
-     *        resource_list_t *rs_list 要申请的资源列表
-     *        void *pri   调用者模块上下文指针 此函数不维护该指针内容所指向地址的生存周期 调用此函数成功时会被设置到token当中去
-     *        bool return_rightnow 为true时表示token不会被挂起 不满足条件时即可返回
-     * 输出参数：void **token 令牌的二级指针 其中*token的生存周期由本模块维护 在put_token时释放
-     * 返回值：
-     *       = 0  即可获得token成功 允许直接获取资源
-     *       > 0  无法直接获取资源需要排队时返回值为rs_list中资源个数 获取资源时会通过 applicant_event_ops中的 token_got进行通知
-     *       =-QOS_ERROR_PENDING  token资源不足 无法获取新的token（通常不可能发生）
-     *       =-QOS_ERROR_FAILEDNODE  资源列表中存在不可获取的资源id
-     *       =-QOS_ERROR_TOOBIGCOST  在QOS_ERROR_FAILEDNODE不发生的情况下资源列表中存在不合法的资源消耗值（过大/为0）
-     *       =-QOS_ERROR_NULLPOINTER 传入参数指针非法
-     * */
-    int (*get_token_easy)(void **token, resource_list_t *rs_list, void *pri,
-                          bool return_rightnow);
-    
     /*
      * 功能描述：分配令牌资源 并将调用者的上下文置入其中
      * 输入参数：
@@ -265,53 +229,6 @@ typedef struct applicant_ops
      *       !=NULL 返回token指针该 指针存周期由本模块维护 在put_token时释放
      * */
     void *(*get_token)(void *pri);
-    
-    /*
-     * 功能描述：向令牌中提交资源 相当与将get_token_easy拆解成多个步骤 每个资源submit一次 最后commit时才会真正提交申请
-     * 输入参数：
-     *        void *token 由get_token获取的token对象 一个token在commit成功后不能再submit 除非token_got超时失败
-     *        get_token_easy 成功后得到的token也不能submit 失败后可以继续submit/ignore或者 commit
-     *        resource_t * token_need 要申请的资源描述 函数不维护rs的生存周期  内部会对其进行拷贝
-     * 输出参数：无
-     * 返回值：
-     *       = 0 加入成功
-     *       =-QOS_ERROR_FAILEDNODE  资源列表中存在不可获取的资源id
-     *       =-QOS_ERROR_TOOBIGCOST  在QOS_ERROR_FAILEDNODE不发生的情况下资源列表中存在不合法的资源消耗值（过大/为0）
-     *       =-QOS_ERROR_NULLPOINTER 传入参数指针非法
-     * */
-    int (*sumbit_to_token)(void *token, resource_t *rs);
-    
-    /*
-     * 功能描述：将token中已经
-     * 输入参数：
-     *        void *token 由get_token获取的token对象 一个token在commit成功后不能再ignore 除非token_got超时失败
-     *        get_token_easy 成功后得到的token也不能submit 失败后可以继续submit/ignore或者 commit
-     *        resource_t * token_need 要申请的资源描述 函数不维护rs的生存周期  内部会对其进行拷贝
-     * 输出参数：无
-     * 返回值：
-     *       = 0 取消token中的某个资源
-     *       =-QOS_ERROR_FAILEDNODE  资源列表中存在不可获取的资源id
-     *       =-QOS_ERROR_TOOBIGCOST  在QOS_ERROR_FAILEDNODE不发生的情况下资源列表中存在不合法的资源消耗值（过大/为0）
-     *       =-QOS_ERROR_NULLPOINTER 传入参数指针非法
-     *       =-QOS_ERROR_NOSUCHRESOURCE 代表给入的resouce不在此token中
-     * */
-    int (*ignore_from_token)(void *token, resource_t *rs);
-    
-    /*
-     * 功能描述：真正请求令牌资源 相当与将get_token_easy拆解成多个步骤 每个资源submit一次 最后commit时才会真正提交申请
-     * 输入参数：
-     *        void *token 由get_token获取的token对象 一个token在commit成功后不能再submit或commit 除非token_got超时失败
-     *        get_token_easy 成功后得到的token也不能submit 失败后可以继续submit/ignore或者 commit
-     *        bool return_rightnow 为true时表示token不会被挂起 不满足条件时即可返回
-     * 输出参数：无
-     * 返回值：
-     *       = 0  即可获得token成功 允许直接获取资源
-     *       > 0  无法直接获取资源需要排队时返回值所有submit过程中资源个数 获取资源时会通过 applicant_event_ops中的 token_got进行通知
-     *       =-QOS_ERROR_FAILEDNODE  资源列表中存在不可获取的资源id
-     *       =-QOS_ERROR_TOOBIGCOST  在QOS_ERROR_FAILEDNODE不发生的情况下资源列表中存在不合法的资源消耗值（过大/为0）
-     *       =-QOS_ERROR_NULLPOINTER 传入参数指针非法
-     * */
-    int (*commit_token)(void *token, bool return_rightnow);
     
     /*
      * 功能描述：释放token资源 并将*token指针置成NULL
@@ -332,14 +249,6 @@ typedef struct applicant_ops
      * 返回值：无
      * */
     void (*set_applicant_event_ops)(applicant_event_ops_t *ops);
-    
-    /*
-     * 功能描述：设置server消息传递操作集 需要在构造后调用
-     * 输入参数：msg_ops_t *ops 消息传递操作集
-     * 输出参数：无
-     * 返回值：无
-     * */
-    void (*set_msg_ops)(msg_ops_t *ops);
 } applicant_ops_t;
 
 
@@ -349,7 +258,7 @@ typedef struct applicant_ops
  * 输出参数：无
  * 返回值：无
  * */
-void qos_client_init();
+void qos_app_init(applicant_ops_t *);
 
 /*
  * 功能描述：qos的client销毁 内部包含静态共享对象qos_client_obj的析构
@@ -357,23 +266,11 @@ void qos_client_init();
  * 输出参数：无
  * 返回值：无
  * */
-void qos_client_exit();
+void qos_app_exit();
 
 /*********************************************************************************/
 
 /***qos_server.h******************************************************************/
-/*调度资源事件回调集*/
-typedef struct dispatcher_event_ops
-{
-    /*
-     * 功能描述：调度资源池中资源得到永久性减少了
-     * 输入参数：
-     *        long new_size 减少后的资源数
-     * 输出参数：无
-     * 返回值：无
-     * */
-    void (*resource_reduced)(long new_size);
-} dispatcher_event_ops_t;
 
 /*调度资源操作集处理资源变化后的事件处理*/
 typedef struct dispatcher_ops
@@ -390,31 +287,6 @@ typedef struct dispatcher_ops
      * 返回值：无
      * */
     void (*resource_increase)(long cost);
-    
-    /*
-     * 功能描述：调度资源池中资源得到永久性减少
-     * 输入参数：
-     *        long cost 减少的资源数
-     * 输出参数：无
-     * 返回值：无
-     * */
-    void (*resource_reduce)(long cost);
-    
-    /*
-     * 功能描述：设置server消息传递操作集 需要在构造后调用
-     * 输入参数：dispatcher_event_ops_t* ops 调度资源事件回调集
-     * 输出参数：无
-     * 返回值：无
-     * */
-    void (*set_dispatcher_event_ops)(dispatcher_event_ops_t *ops);
-    
-    /*
-     * 功能描述：设置server消息传递操作集 需要在构造后调用
-     * 输入参数：msg_ops_t *ops 消息传递操作集
-     * 输出参数：无
-     * 返回值：无
-     * */
-    void (*set_msg_ops)(msg_ops_t *ops);
 } dispatcher_ops_t;
 
 /*
@@ -423,7 +295,7 @@ typedef struct dispatcher_ops
  * 输出参数：无
  * 返回值：无
  * */
-void qos_server_init();
+void qos_dispatch_init(dispatcher_ops_t *);
 
 /*
  * 功能描述：qos的server端销毁 内部包含静态共享对象qos_server_obj的析构
@@ -431,7 +303,7 @@ void qos_server_init();
  * 输出参数：无
  * 返回值：无
  * */
-void qos_server_exit();
+void qos_server_exit(dispatcher_ops_t *);
 
 /*********************************************************************************/
 

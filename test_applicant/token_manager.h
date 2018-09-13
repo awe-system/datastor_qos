@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+
+#include "test_frame.h"
+#include "sysqos_test_lib.h"
 #include "sysqos_common.h"
 #include "sysqos_container_item.h"
 #include "sysqos_token_reqgrp_manager.h"

@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <pthread.h>
 #include "sysqos_nodereq_list.h"
-#include "sysqos_test_lib.h"
 
 static void push_back(nodereq_list_t *tokens, resource_list_t *rs)
 {
@@ -37,6 +36,7 @@ static int erase(nodereq_list_t *tokens, resource_list_t *rs)
     tokens->press -= rs->rs.cost;
     list_del(&rs->list);
     pthread_rwlock_unlock(&tokens->lck);
+    return 0;
 }
 
 static void pop_all(nodereq_list_t *tokens, struct list_head *head)

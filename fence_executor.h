@@ -28,7 +28,6 @@ typedef struct fence_executor
 int fence_executor_init(fence_executor_t *executor, fence_executor_func_t func);
 void fence_executor_exit(fence_executor_t *executor);
 
-void test_fence_executor(fence_executor_t *executor);
 #ifdef __cplusplus
 }
 #endif

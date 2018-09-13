@@ -7,6 +7,7 @@
 
 #include <sys/param.h>
 #include "sysqos_type.h"
+#include "sysqos_container_item.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,16 +19,17 @@ typedef struct memory_cache
 {
     unsigned long unit_size;
     unsigned long cache_unit;
-    
+    struct list_head empty_pool;
+    struct list_head used_pool;
     /**************************************************/
     void *(*alloc)(struct memory_cache *cache);
     
     void (*free)(struct memory_cache *cache, void *data);
     /**************************************************/
+    sysqos_spin_lock_t lck;
 #ifdef CACHE_OPEN_CNT
     unsigned long      alloc_cnt;
     unsigned long      free_cnt;
-    sysqos_spin_lock_t lck;
 #endif
 } memory_cache_t;
 

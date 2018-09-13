@@ -68,7 +68,6 @@ static void update_nodes_token_quota_new(fence_executor_t *executor, void *ctx)
     
     pthread_rwlock_rdlock(&manager->lck);
     manager->tab->for_each_do(manager->tab, pctx, add_rs_to_upctx);
-    
     pctx->update(pctx,manager,set_quota_new);
     pthread_rwlock_unlock(&manager->lck);
     
@@ -106,7 +105,7 @@ static int alloc_tokens(struct sysqos_disp_manager *manager,
 {
     void       *node_val;
     app_node_t *node;
-    int        err = QOS_ERROR_OK;
+    int        err;
     assert(manager && rs && fence_id);
     
     check_online(manager, rs->id);
@@ -127,7 +126,7 @@ static void free_tokens(struct sysqos_disp_manager *manager,
 {
     void       *node_val;
     app_node_t *node;
-    int        err = QOS_ERROR_OK;
+    int        err;
     assert(manager && rs);
     
     if ( is_fail )
@@ -153,59 +152,62 @@ static void resource_increase(struct sysqos_disp_manager *manager,
     pthread_rwlock_unlock(&manager->lck);
     update_policy(manager, true);
 }
-
-static void resource_reduce(struct sysqos_disp_manager *manager, long cost)
-{
-    bool is_success = true;
-    pthread_rwlock_rdlock(&manager->lck);
-    is_success = manager->tokens.try_decrease(&manager->tokens, cost);
-    pthread_rwlock_unlock(&manager->lck);
-    if ( is_success )
-    {
-        update_policy(manager, true);
-    }
-}
-
-static void set_dispatcher_event_ops(struct sysqos_disp_manager *manager,
-                                     dispatcher_event_ops_t *ops)
-{
-    manager->disp_ops = ops;
-}
+//
+//static void resource_reduce(struct sysqos_disp_manager *manager, long cost)
+//{
+//    bool is_success = true;
+//    pthread_rwlock_rdlock(&manager->lck);
+//    is_success = manager->tokens.try_decrease(&manager->tokens, cost);
+//    pthread_rwlock_unlock(&manager->lck);
+//    if ( is_success )
+//    {
+//        update_policy(manager, true);
+//    }
+//}
+//
+//static void set_dispatcher_event_ops(struct sysqos_disp_manager *manager,
+//                                     dispatcher_event_ops_t *ops)
+//{
+//    manager->disp_ops = ops;
+//}
 
 static void set_msg_ops(struct sysqos_disp_manager *manager, msg_ops_t *ops)
 {
     manager->msg_ops = ops;
+    
+    manager->tab->set_hash(manager->tab,ops->hash_id);
+    manager->tab->set_compare(manager->tab,ops->compare);
 }
 
 static inline sysqos_disp_manager_t *manager_by_msg(msg_event_ops_t *ops)
 {
     return container_of(ops, sysqos_disp_manager_t, msg_event);
 }
-
-//NOTE:重置version暂时以达到让对方重置从而驱动自己重置的结果
-static void node_reset(struct msg_event_ops *ops, void *id)
-{
-    void       *node_val;
-    app_node_t *node;
-    int        err = QOS_ERROR_OK;
-    assert(ops);
-    
-    sysqos_disp_manager_t *manager = manager_by_msg(ops);
-    pthread_rwlock_rdlock(&manager->lck);
-    err = manager->tab->find(manager->tab, id, &node_val);
-    if ( err ) end_func(err, QOS_ERROR_FAILEDNODE, unlock_end);
-    node = node_val;
-    manager->tokens.free(&manager->tokens, node->reset(node));
-unlock_end:
-    pthread_rwlock_unlock(&manager->lck);
-    
-    update_policy(manager, true);
-}
+//
+////NOTE:重置version暂时以达到让对方重置从而驱动自己重置的结果
+//static void node_reset(struct msg_event_ops *ops, void *id)
+//{
+//    void       *node_val;
+//    app_node_t *node;
+//    int        err = QOS_ERROR_OK;
+//    assert(ops);
+//
+//    sysqos_disp_manager_t *manager = manager_by_msg(ops);
+//    pthread_rwlock_rdlock(&manager->lck);
+//    err = manager->tab->find(manager->tab, id, &node_val);
+//    if ( err ) end_func(err, QOS_ERROR_FAILEDNODE, unlock_end);
+//    node = node_val;
+//    manager->tokens.free(&manager->tokens, node->reset(node));
+//unlock_end:
+//    pthread_rwlock_unlock(&manager->lck);
+//
+//    update_policy(manager, true);
+//}
 
 static void node_online(struct msg_event_ops *ops, void *id)
 {
     void                  *node_val;
-    int                   err      = QOS_ERROR_OK;
+    int                   err;
     sysqos_disp_manager_t *manager = manager_by_msg(ops);
     app_node_t            *node    = NULL;
     assert(ops);
@@ -246,7 +248,7 @@ static void node_online(struct msg_event_ops *ops, void *id)
     update_policy(manager, true);
     
     return;
-    manager->tab->erase(manager->tab, id, (void **) &node);
+//    manager->tab->erase(manager->tab, id, (void **) &node);
 insert_node_failed:
     manager->tokens.offline(&manager->tokens, node);
 tokens_online_failed:
@@ -271,14 +273,14 @@ static void node_offline(struct msg_event_ops *ops, void *id)
 {
     void *node_val = NULL;
     
-    int                   err      = QOS_ERROR_OK;
+    int                   err;
     app_node_t            *node    = NULL;
     sysqos_disp_manager_t *manager = manager_by_msg(ops);
     assert(ops);
     
     pthread_rwlock_wrlock(&manager->lck);
     
-    err = manager->tab->erase(manager->tab, id, node_val);
+    err = manager->tab->erase(manager->tab, id, &node_val);
     if ( err )
     {
         goto erase_node_failed;
@@ -307,16 +309,17 @@ static int node_rcvd(sysqos_disp_manager_t *manager, void *id,
                      unsigned long *pnew_free_size, bool *is_reset)
 {
     void       *node_val;
-    int        err   = QOS_ERROR_OK;
+    int        err;
     app_node_t *node = NULL;
     pthread_rwlock_rdlock(&manager->lck);
     do
     {
         err = manager->tab->find(manager->tab, id, &node_val);
-        if ( err )
-        {
-            break;
-        }
+        assert(err == QOS_ERROR_OK);
+//        if ( err )
+//        {
+//            break;
+//        }
         
         node = node_val;
         *is_reset = node->rcvd(node, pa2d, pnew_free_size);
@@ -332,25 +335,25 @@ static void rcvd(struct msg_event_ops *ops, void *id,
 {
     bool is_reset = false;
     
-    int                   err      = QOS_ERROR_OK;
+    int                   err;
     sysqos_disp_manager_t *manager = manager_by_msg(ops);
     
     app2dispatch_t a2d;
     unsigned long  new_free_size   = 0;
     assert(ops && len == sizeof(app2dispatch_t) && buf);
-    
+    memcpy(&a2d,buf,sizeof(app2dispatch_t));
     check_online(manager, id);
     
     err = node_rcvd(manager, id, &a2d, &new_free_size, &is_reset);
     if ( err )
     { return; }
     
-    if ( is_reset )
+    /*if ( is_reset )
     {
         manager->msg_event.node_reset(&manager->msg_event, id);
         update_policy(manager, true);
     }
-    else if ( new_free_size )
+    else*/if ( new_free_size )
     {
         manager->tokens.free(&manager->tokens, new_free_size);
         try_clear_wait_increase(manager);
@@ -370,7 +373,7 @@ static int snd_msg_buf(struct msg_event_ops *ops, void *id, long len,
                        unsigned char *buf)
 {
     void                  *node_val;
-    int                   err      = QOS_ERROR_OK;
+    int                   err;
     sysqos_disp_manager_t *manager = manager_by_msg(ops);
     app_node_t            *node    = NULL;
     dispatch2app_t        d2a;
@@ -380,21 +383,22 @@ static int snd_msg_buf(struct msg_event_ops *ops, void *id, long len,
     do
     {
         err = manager->tab->find(manager->tab, id, &node_val);
-        if ( err )
-        {
-            break;
-        }
+        assert(err == QOS_ERROR_OK);
+//        if ( err )
+//        {
+//            break;
+//        }
         
         node = node_val;
         node->get_protocol(node, &d2a);
-        memcpy(buf, &d2a, len);
+        memcpy(buf, &d2a, (size_t) len);
     } while ( 0 );
     pthread_rwlock_unlock(&manager->lck);
     
-    if ( err )
-    {
-        return QOS_ERROR_FAILEDNODE;
-    }
+//    if ( err )
+//    {
+//        return QOS_ERROR_FAILEDNODE;
+//    }
     
     return err;
 }
@@ -408,25 +412,25 @@ static inline void fill_disp_manager_val(sysqos_disp_manager_t *manager,
     manager->msg_event.node_online  = node_online;
     manager->msg_event.node_offline = node_offline;
     manager->msg_event.rcvd         = rcvd;
-    manager->msg_event.node_reset   = node_reset;
+//    manager->msg_event.node_reset   = node_reset;
     manager->msg_event.snd_msg_len  = snd_msg_len;
     manager->msg_event.snd_msg_buf  = snd_msg_buf;
     
     manager->set_msg_ops              = set_msg_ops;
-    manager->set_dispatcher_event_ops = set_dispatcher_event_ops;
+//    manager->set_dispatcher_event_ops = set_dispatcher_event_ops;
     
     manager->alloc_tokens      = alloc_tokens;
     manager->free_tokens       = free_tokens;
     manager->resource_increase = resource_increase;
-    manager->resource_reduce   = resource_reduce;
+//    manager->resource_reduce   = resource_reduce;
 }
 
 
 int sysqos_disp_manager_init(sysqos_disp_manager_t *manager, int table_len,
                              unsigned long max_node_num, int update_interval,
-                             unsigned long min_rs_num, int rebalance_ratio)
+                             unsigned long min_rs_num/*, int rebalance_ratio*/)
 {
-    int err = QOS_ERROR_OK;
+    int err;
     
     memset(manager, 0, sizeof(sysqos_disp_manager_t));
     fill_disp_manager_val(manager, min_rs_num);
@@ -463,7 +467,7 @@ int sysqos_disp_manager_init(sysqos_disp_manager_t *manager, int table_len,
     if ( err ) end_func(err, QOS_ERROR_MEMORY, policy_update_ctx_init_failed);
     
     return err;
-    token_update_ctx_exit(&manager->update_ctx);
+//    token_update_ctx_exit(&manager->update_ctx);
 policy_update_ctx_init_failed:
     fence_executor_exit(&manager->executor);
 fence_executor_init_failed:
@@ -485,6 +489,7 @@ list_head_queue_init_failed:
 void sysqos_disp_manager_exit(sysqos_disp_manager_t *manager)
 {
     token_update_ctx_exit(&manager->update_ctx);
+    fence_executor_exit(&manager->executor);
     count_controller_exit(&manager->cnt_controller);
     memory_cache_exit(&manager->token_node_cache);
     token_global_exit(&manager->tokens);
@@ -493,8 +498,3 @@ void sysqos_disp_manager_exit(sysqos_disp_manager_t *manager)
     wait_increase_list_exit(&manager->lhead_wait_increase);
 }
 
-void test_sysqos_disp_manager()
-{
-    
-    //FIXME
-}

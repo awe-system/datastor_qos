@@ -8,12 +8,10 @@
 #include <sys/types.h>
 #include "sysqos_interface.h"
 #include "memory_cache.h"
-#include "sysqos_test_lib.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define APP_TOKEN_GRP_TEST
 typedef enum app_token_stat
 {
     app_token_stat_init,
@@ -31,9 +29,14 @@ typedef struct token_req
     struct list_head     list_reqgrp;
 } token_req_t;
 
+static inline resource_list_t* resource_list_bylist(struct list_head *plist)
+{
+    return container_of(plist, resource_list_t, list);
+}
+
 static inline token_req_t *app_token_by_list(struct list_head *list)
 {
-    return container_of(container_of(list, resource_list_t, list),
+    return container_of(resource_list_bylist(list),
                         token_req_t, token_need);
 }
 

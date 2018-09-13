@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include "sysqos_common.h"
 #include "safe_rw_list.h"
-#include "sysqos_container_item.h"
 
 static int rwfind_nolock(struct safe_rw_list *list, void *id, void **pri)
 {
@@ -37,7 +36,6 @@ static int rwinsert(struct safe_rw_list *list, void *id, void *pri)
 {
     int                  err   = safe_rw_list_error_exist;
     qos_container_item_t *item = NULL;
-    int                  index = 0;
     struct list_head     *head = NULL;
     void                 *tmp_pri;
     assert(list);
@@ -72,11 +70,12 @@ static int rwerase(struct safe_rw_list *list, void *id, void **pri)
     int              err   = safe_rw_list_error_notfound;
     struct list_head *head = NULL;
     struct list_head *pos  = NULL;
+    struct list_head *tmp  = NULL;
     assert(list && list->compare);
     
     head = &list->list;
     pthread_rwlock_wrlock(&list->rwlock);
-    list_for_each(pos, head)
+    list_for_each_safe(pos,tmp, head)
     {
         qos_container_item_t
                 *item = container_of(pos, qos_container_item_t, list);
@@ -98,7 +97,7 @@ static int rwerase(struct safe_rw_list *list, void *id, void **pri)
 
 static int rwfind(struct safe_rw_list *list, void *id, void **pri)
 {
-    int err = safe_rw_list_error_ok;
+    int err;
     pthread_rwlock_rdlock(&list->rwlock);
     err = rwfind_nolock(list, id, pri);
     pthread_rwlock_unlock(&list->rwlock);
@@ -127,7 +126,6 @@ static void for_each_do(struct safe_rw_list *list, void *ctx,
 
 static void rwclear(struct safe_rw_list *list)
 {
-    int              i     = 0;
     struct list_head *head = &list->list;
     struct list_head *pos  = NULL;
     assert(list);

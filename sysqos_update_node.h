@@ -10,7 +10,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <sys/types.h>
-#include "list_head.h"
+#include "sysqos_type.h"
 #include "sysqos_policy_param.h"
 
 typedef struct update_node
@@ -21,7 +21,7 @@ typedef struct update_node
     struct list_head list_update;
 } update_node_t;
 
-static update_node_t * update_node_by_list(struct list_head *list)
+static inline update_node_t * update_node_by_list(struct list_head *list)
 {
     return container_of(list,update_node_t,list_update);
 }

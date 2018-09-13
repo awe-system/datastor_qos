@@ -6,15 +6,13 @@
 #define _QOS_LIST_HEAD_QUEUE_H
 
 #include <stdbool.h>
-#include "list_head.h"
+#include "sysqos_type.h"
 #include "memory_cache.h"
 #include "sysqos_app_node.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define LIST_HEAD_QUEUE_TEST
 
 typedef struct wait_increase_list
 {
@@ -27,19 +25,15 @@ typedef struct wait_increase_list
     
     
     /**private*******************************/
-    memory_cache_t   cache;
     struct list_head head;
-    struct list_head left;
     //for test
-    void (*dequeue)(struct wait_increase_list *);
+//    void (*dequeue)(struct wait_increase_list *);
 } wait_increase_list_t;
 
 int
 wait_increase_list_init(wait_increase_list_t *q, unsigned long max_queue_depth);
 
 void wait_increase_list_exit(wait_increase_list_t *queue);
-
-void test_wait_increase_list();
 
 #ifdef __cplusplus
 }

@@ -12,6 +12,8 @@
 #include "sysqos_interface.h"
 #include "sysqos_dispatch_base_node.h"
 #include "sysqos_protocol.h"
+#include "test_frame.h"
+
 void base_node_suit_init(test_frame_t *frame);
 
 #endif //TEST_QOS_BASE_NODE_H

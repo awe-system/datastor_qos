@@ -4,12 +4,7 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <stdlib.h>
-#include <pthread.h>
 #include "sysqos_token_reqgrp.h"
-#include "list_head.h"
-#include "memory_cache.h"
-#include "sysqos_interface.h"
 #include "sysqos_common.h"
 
 static void free_token(token_req_t *resource,
@@ -162,7 +157,7 @@ static void clear_token_grp_resource(token_reqgrp_t *token_grp,
 int token_reqgrp_init(token_reqgrp_t *token_grp, memory_cache_t *resource_cache,
                       struct list_head *rs_list, void *pri)
 {
-    int err = QOS_ERROR_OK;
+    int err;
     assert(token_grp && resource_cache && rs_list);
     token_grp->pri = pri;
     fill_normal_val(token_grp);

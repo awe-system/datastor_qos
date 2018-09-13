@@ -9,7 +9,6 @@
 extern "C" {
 #endif
 
-#include "list_head.h"
 #include "sysqos_common.h"
 #include "sysqos_interface.h"
 #include "sysqos_app_node.h"

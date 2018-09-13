@@ -29,7 +29,8 @@ typedef int (*compare_id_func)(void *id_a, void *id_b);
 
 typedef int (*hash_func)(void *id, int table_len);
 
-typedef void (*for_each_dofunc_t)(void *ctx,void *id,void *pri);
+//ctx isfor_each param item_in_tab is item in tab or list
+typedef void (*for_each_dofunc_t)(void *ctx,void *id,void *item_in_tab);
 
 #define end_func(err, err_no, lab) \
 do\
@@ -37,12 +38,6 @@ do\
     (err) = (err_no);\
     goto lab;\
 }while(0)
-
-#ifndef list_for_each_safe
-#define list_for_each_safe(pos, n, head) \
-    for (pos = (head)->next, n = pos->next; pos != (head); \
-        pos = n, n = pos->next)
-#endif
 
 #ifdef __cplusplus
 }

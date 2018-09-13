@@ -16,6 +16,7 @@
 #define INOUT
 #endif
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <stdbool.h>
 
@@ -74,9 +75,9 @@ typedef struct test_map
     void (*complete_insert)(struct test_map *tm, IN unsigned long pair_num, IN
                             test_key_pair_t pairs[]);
     
-    void (*try_update_items_lock_erase)(struct test_map *tm, INOUT
-                                        unsigned long *max_pair_num, OUT
-                                        test_key_pair_t pairs[]);
+//    void (*try_update_items_lock_erase)(struct test_map *tm, INOUT
+//                                        unsigned long *max_pair_num, OUT
+//                                        test_key_pair_t pairs[]);
     
     void (*try_find_items_lock_erase)(struct test_map *tm, INOUT
                                       unsigned long *max_pair_num, OUT
@@ -86,7 +87,7 @@ typedef struct test_map
                          test_key_pair_t pairs[]);
     
     /*************************************************/
-    void (*dump)(struct test_map *tm);
+//    void (*dump)(struct test_map *tm);
     
     /*************************************************/
     unsigned long    max_key_num;
@@ -101,7 +102,7 @@ void test_map_init(test_map_t *tm, unsigned long max_key_num);
 
 void test_map_exit(test_map_t *tm);
 
-void test_dump_pairs(unsigned long num, test_key_pair_t pairsp[]);
+//void test_dump_pairs(unsigned long num, test_key_pair_t pairsp[]);
 
 
 #define insert_pairs(cur_map, num, pairs, tm) \
@@ -110,7 +111,7 @@ do{\
     for(i= 0;i<(num);++i)\
     {\
         int err = (cur_map)->insert((cur_map),(void*)(pairs)[i].key,(void*)(pairs)[i].val);\
-        if(err){(cur_map)->dump(cur_map);(tm)->dump(tm);test_dump_pairs(num,pairs);}\
+/*        if(err){(cur_map)->dump(cur_map);(tm)->dump(tm);test_dump_pairs(num,pairs);}*/\
         assert(err == 0);\
     }\
 }while(0)
@@ -127,6 +128,7 @@ do{\
     }\
 }while(0)
 
+/*
 //
 //#define checksum_pairs_diff(cur_map,num,pairs) \
 //do{\
@@ -152,6 +154,7 @@ do{\
 //        assert(err == 0);\
 //    }\
 //}while(0)
+*/
 
 #define checksum_pairs(cur_map, num, pairs) \
 do{\

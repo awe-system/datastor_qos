@@ -11,7 +11,7 @@
 #define TEST_MAX_ITEM_NUM 4096
 #define first_insert_num 20
 #define first_erase_num 10
-#define item_piece      10
+#define item_piece      10UL
 #define second_insert_num   200000
 #define insert_thread_num   10
 #define second_erase_num    200010
@@ -104,8 +104,8 @@ static void test_case_regular_find()
 static void *insert_thread_func(void *arg)
 {
     safe_rw_list_t  *list      = arg;
-    int             insert_num = second_insert_num / insert_thread_num;
-    int             left_num   = insert_num;
+    unsigned long   insert_num = second_insert_num / insert_thread_num;
+    unsigned long   left_num   = insert_num;
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
@@ -127,8 +127,8 @@ static void *insert_thread_func(void *arg)
 static void *erase_thread_func(void *arg)
 {
     safe_rw_list_t  *list     = arg;
-    int             erase_num = second_erase_num / erase_thread_num;
-    int             left_num  = erase_num;
+    unsigned long   erase_num = second_erase_num / erase_thread_num;
+    unsigned long   left_num  = erase_num;
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
@@ -150,7 +150,7 @@ static void *find_thread_func(void *arg)
 {
     safe_rw_list_t  *list    = arg;
     int             find_num = second_find_num / find_thread_num;
-    int             left_num = find_num;
+    unsigned long   left_num = find_num;
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
@@ -190,11 +190,11 @@ static void test_case_concurrency()
 
 static int test_init()
 {
-    printf(YELLOW"--------------test_init----------------------:\n"RESET);
+    printf(YELLOW"--------------test_context_init----------------------:\n"RESET);
     test_map_init(&test, TEST_MAX_ITEM_NUM);
     memory_cache_init(&cache, sizeof(qos_container_item_t), TEST_MAX_ITEM_NUM);
     test_case_init_exit(&list, &cache);
-    return  CUE_SUCCESS;
+    return CUE_SUCCESS;
 }
 
 static int test_clean()
@@ -216,7 +216,7 @@ void safe_rw_suit_init(test_frame_t *frame)
     suit.add_case(&suit, "test_case_regular_erase", test_case_regular_erase);
     
     suit.add_case(&suit, "test_case_regular_find", test_case_regular_find);
-    
+
 #ifdef TEST_CONCURRENCY
     suit.add_case(&suit, "test_case_concurrency", test_case_concurrency);
 #endif

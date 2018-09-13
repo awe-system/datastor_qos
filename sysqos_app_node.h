@@ -27,7 +27,7 @@ typedef struct app_node
 {
     /**public**************************************/
     //return to globel free
-    unsigned long (*reset)(struct app_node *node);
+//    unsigned long (*reset)(struct app_node *node);
     
     int (*alloc)(struct app_node *node, resource_t *rs,
                  long *fence_id);
@@ -69,7 +69,7 @@ typedef struct app_node
 }app_node_t;
 
 
-static app_node_t * app_node_by_update(update_node_t *updatenode)
+static inline app_node_t * app_node_by_update(update_node_t *updatenode)
 {
     return container_of(updatenode,app_node_t,updatenode);
 }
@@ -78,8 +78,6 @@ int app_node_init(app_node_t *node, unsigned long min_units,
                   long fence_id);
 
 void app_node_exit(app_node_t *node);
-
-void test_app_node();
 
 #ifdef __cplusplus
 }

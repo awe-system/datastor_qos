@@ -10,15 +10,15 @@
 #include "sysqos_dispatch_node.h"
 
 /*******************************************************************************************************************/
-static inline void check_snd_msg(token_reqgrp_manager_t *manager,
-                                 app2dispatch_t *atd)
-{
-    if ( manager->msg_ops->snd_msg )
-    {
-        manager->msg_ops->snd_msg(manager->msg_ops, sizeof(app2dispatch_t),
-                                  (unsigned char *) &atd);
-    }
-}
+//static inline void check_snd_msg(token_reqgrp_manager_t *manager,
+//                                 app2dispatch_t *atd)
+//{
+//    if ( manager->msg_ops->snd_msg )
+//    {
+//        manager->msg_ops->snd_msg(manager->msg_ops, sizeof(app2dispatch_t),
+//                                  (unsigned char *) &atd);
+//    }
+//}
 
 static inline void end_token_grps(token_reqgrp_manager_t *manager,
                                   struct list_head *permission_list)
@@ -28,7 +28,7 @@ static inline void end_token_grps(token_reqgrp_manager_t *manager,
     list_for_each_safe(pos, tmp, permission_list)
     {
         token_reqgrp_t *token_grp = container_of(pos, token_reqgrp_t,
-                                                  lhead_reqgrep_got);
+                                                 lhead_reqgrep_got);
         manager->app_ops->token_grp_got(token_grp, token_grp->pri,
                                         token_grp->err);
     }
@@ -42,10 +42,11 @@ try_to_alloc_from_manager_nolock(struct token_reqgrp_manager *manager,
                                  token_req_t *rip)
 {
     void *item = NULL;
-    int  err   = QOS_ERROR_OK;
+    int  err;
     assert(manager && rip);
     
-    err = manager->app_node_table->find(manager->app_node_table, rip->token_need.rs.id, &item);
+    err = manager->app_node_table
+            ->find(manager->app_node_table, rip->token_need.rs.id, &item);
     if ( err )
     {
         return token_grp->to_failed(token_grp, rip);
@@ -60,10 +61,11 @@ static void try_to_free_to_manager_nolock(struct token_reqgrp_manager *manager,
                                           struct list_head *relative_token_grp_list)
 {
     void *item = NULL;
-    int  err   = QOS_ERROR_OK;
+    int  err;
     assert(manager && rs);
     
-    err = manager->app_node_table->find(manager->app_node_table, rs->rs.id, &item);
+    err = manager->app_node_table
+            ->find(manager->app_node_table, rs->rs.id, &item);
     if ( err )
     {
         return;
@@ -84,19 +86,16 @@ token_grp_manager_by_msg_event(struct msg_event_ops *ops)
 static int try_to_get_tokens(struct token_reqgrp_manager *manager,
                              token_reqgrp_t *token_grp)
 {
-    int                      err   = QOS_ERROR_OK;
-    struct list_head         *pos  = NULL;
-    struct list_head         *tmp  = NULL;
-    struct list_head         to_fail_wait_list;
-    dispatch_node_t *item = NULL;
+    int              err  = QOS_ERROR_OK;
+    struct list_head *pos = NULL;
+    struct list_head *tmp = NULL;
+    struct list_head to_fail_wait_list;
     LISTHEAD_INIT(&to_fail_wait_list);
     
     list_for_each_safe(pos, tmp, &token_grp->lhead_reqgrp)
     {
         token_req_t
-                        *rip = app_token_by_grp_list(pos);
-        resource_list_t *rs  = &rip->token_need;
-        
+                *rip = app_token_by_grp_list(pos);
         err = try_to_alloc_from_manager_nolock(manager, token_grp, rip);
     }
     return err;
@@ -106,7 +105,6 @@ static void try_to_put_tokens(struct token_reqgrp_manager *manager,
                               token_reqgrp_t *token_grp,
                               struct list_head *relative_token_grp_list)
 {
-    int              err  = QOS_ERROR_OK;
     struct list_head *pos = NULL;
     struct list_head *tmp = NULL;
     
@@ -125,12 +123,11 @@ static void try_to_put_tokens(struct token_reqgrp_manager *manager,
 
 static void node_online(struct msg_event_ops *ops, void *id)
 {
-    token_reqgrp_manager_t      *manager = token_grp_manager_by_msg_event(ops);
-    dispatch_node_t *item    = NULL;
-    long                     atd_len  = sizeof(app2dispatch_t);
-    app2dispatch_t            atd;
+    token_reqgrp_manager_t *manager = token_grp_manager_by_msg_event(ops);
+    dispatch_node_t        *item    = NULL;
+    app2dispatch_t         atd;
     init_app2dispatch(&atd);
-    int err = QOS_ERROR_OK;
+    int err;
     
     item = (dispatch_node_t *) manager->manager_item_cache
             .alloc(&manager->manager_item_cache);
@@ -147,12 +144,13 @@ static void node_online(struct msg_event_ops *ops, void *id)
     }
     
     atd.press.val = 0;
-    atd.version       = 0;
+    atd.version   = 0;
     
     pthread_rwlock_wrlock(&manager->lck);
     do
     {
-        err = manager->app_node_table->insert(manager->app_node_table, id, item);
+        err = manager->app_node_table
+                ->insert(manager->app_node_table, id, item);
         if ( err )
         {
             break;
@@ -179,8 +177,8 @@ manager_item_alloc_failed:
 static void node_offline(struct msg_event_ops *ops, void *id)
 {
     token_reqgrp_manager_t *manager = token_grp_manager_by_msg_event(ops);
-    int                 err      = QOS_ERROR_OK;
-    void                *item    = NULL;
+    int                    err;
+    void                   *item    = NULL;
     
     struct list_head relative_token_grps;
     LISTHEAD_INIT(&relative_token_grps);
@@ -196,7 +194,8 @@ static void node_offline(struct msg_event_ops *ops, void *id)
         ((dispatch_node_t *) item)
                 ->pop_all(item, &relative_token_grps);
         
-        err = manager->app_node_table->erase(manager->app_node_table, id, &item);
+        err = manager->app_node_table
+                ->erase(manager->app_node_table, id, &item);
         assert(err == 0);
     } while ( 0 );
     pthread_rwlock_unlock(&manager->lck);
@@ -211,8 +210,8 @@ static void node_offline(struct msg_event_ops *ops, void *id)
 static void node_reset(struct msg_event_ops *ops, void *id)
 {
     token_reqgrp_manager_t *manager = token_grp_manager_by_msg_event(ops);
-    void                *item    = NULL;
-    int                 err      = QOS_ERROR_OK;
+    void                   *item    = NULL;
+    int                    err;
     pthread_rwlock_wrlock(&manager->lck);
     do
     {
@@ -232,23 +231,24 @@ static void node_reset(struct msg_event_ops *ops, void *id)
 static void rcvd(struct msg_event_ops *ops,
                  void *id, long len, unsigned char *buf)
 {
-    int                 err_cnt  = RCVD_FAIL_TIMES;
-    int                 err      = QOS_ERROR_OK;
+    int                    err_cnt  = RCVD_FAIL_TIMES;
+    int                    err;
     token_reqgrp_manager_t *manager = token_grp_manager_by_msg_event(ops);
-    void                *item    = NULL;
-    bool                is_reset = false;
-    dispatch2app_t       dta;
-    struct list_head    relative_token_grps;
+    void                   *item    = NULL;
+    bool                   is_reset = false;
+    dispatch2app_t         dta;
+    struct list_head       relative_token_grps;
     LISTHEAD_INIT(&relative_token_grps);
     
     assert(ops && sizeof(dispatch2app_t) == len);
-    memcpy(&dta, buf, len);
+    memcpy(&dta, buf, (size_t) len);
     do
     {
         pthread_rwlock_rdlock(&manager->lck);
         do
         {
-            err = manager->app_node_table->find(manager->app_node_table, id, &item);
+            err = manager->app_node_table
+                    ->find(manager->app_node_table, id, &item);
             if ( err )
             {
                 break;
@@ -284,7 +284,8 @@ static void check_node_in_when_get(struct token_reqgrp_manager *manager,
     list_for_each_safe(pos, tmp_list, phead)
     {
         resource_list_t *rs = container_of(pos, resource_list_t, list);
-        int             err = manager->app_node_table->find(manager->app_node_table, rs->rs.id, &tmp);
+        int             err = manager->app_node_table
+                ->find(manager->app_node_table, rs->rs.id, &tmp);
         if ( err )
         {
             manager->msg_event.node_online(&manager->msg_event, rs->rs.id);
@@ -297,7 +298,7 @@ static int get_token_grp(struct token_reqgrp_manager *manager,
                          void *pri,
                          token_reqgrp_t **pp_token_grp)
 {
-    int              err = QOS_ERROR_OK;
+    int              err;
     struct list_head head;
     struct list_head tmp_got_list;
     struct list_head relative_token_grp;
@@ -313,7 +314,8 @@ static int get_token_grp(struct token_reqgrp_manager *manager,
     if ( !*pp_token_grp )
         end_func(err, QOS_ERROR_MEMORY, token_grp_cache_alloc_failed);
     
-    err = token_reqgrp_init(*pp_token_grp, &manager->resource_cache, &head, pri);
+    err = token_reqgrp_init(*pp_token_grp, &manager->resource_cache, &head,
+                            pri);
     
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, permission_init_failed);
@@ -353,7 +355,8 @@ static void check_node_out_when_put(struct token_reqgrp_manager *manager,
     list_for_each_safe(pos, tmp_list, phead)
     {
         resource_list_t *rs = container_of(pos, resource_list_t, list);
-        int             err = manager->app_node_table->find(manager->app_node_table, rs->rs.id, &tmp);
+        int             err = manager->app_node_table
+                ->find(manager->app_node_table, rs->rs.id, &tmp);
         if ( !err )
         {
             manager->msg_event.node_offline(&manager->msg_event, rs->rs.id);
@@ -394,9 +397,9 @@ static long snd_msg_len(struct msg_event_ops *ops, void *id)
 static int snd_msg_buf(struct msg_event_ops *ops, void *id,
                        long len, unsigned char *buf)
 {
-    int                 err      = QOS_ERROR_OK;
-    app2dispatch_t       atd;
-    void                *item    = NULL;
+    int                    err;
+    app2dispatch_t         atd;
+    void                   *item    = NULL;
     token_reqgrp_manager_t *manager = token_grp_manager_by_msg_event(ops);
     
     assert(ops && len == sizeof(app2dispatch_t) && buf);
@@ -407,7 +410,7 @@ static int snd_msg_buf(struct msg_event_ops *ops, void *id,
         end_func(err, QOS_ERROR_FAILEDNODE, find_failed);
     ((dispatch_node_t *) item)
             ->get_protocol((dispatch_node_t *) item, &atd);
-    memcpy(buf, &atd, len);
+    memcpy(buf, &atd, (size_t) len);
 
 find_failed:
     pthread_rwlock_unlock(&manager->lck);
@@ -433,28 +436,31 @@ int token_reqgrp_manager_init(token_reqgrp_manager_t *manager, int tab_len,
                               int max_token_grp_num, int max_resource_num,
                               int max_node_num)
 {
-    int err = QOS_ERROR_OK;
-    manager->app_node_table = alloc_hash_table(tab_len, max_node_num);
+    int err;
+    manager->app_node_table = alloc_hash_table(tab_len,
+                                               (unsigned long) max_node_num);
     if ( !manager->app_node_table )
         end_func(err, QOS_ERROR_MEMORY, alloc_hash_table_failed);
     err = memory_cache_init(&manager->manager_item_cache,
-                            sizeof(dispatch_node_t), max_node_num);
+                            sizeof(dispatch_node_t),
+                            (unsigned long) max_node_num);
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, manager_item_cache_init_failed);
     err = memory_cache_init(&manager->token_grp_cache, sizeof(token_reqgrp_t),
-                            max_token_grp_num);
+                            (unsigned long) max_token_grp_num);
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, token_grp_cache_init_failed);
     err = memory_cache_init(&manager->resource_cache,
-                            sizeof(token_req_t), max_resource_num);
+                            sizeof(token_req_t),
+                            (unsigned long) max_resource_num);
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, resource_in_permission_init_failed);
     
     err = pthread_rwlock_init(&manager->lck, NULL);
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, rwlock_init_failed);
-    manager->get_token_reqgrp     = get_token_grp;
-    manager->put_token_reqgrp     = put_token_grp;
+    manager->get_token_reqgrp  = get_token_grp;
+    manager->put_token_reqgrp  = put_token_grp;
     manager->set_app_event_ops = set_app_event_ops;
     manager->set_msg_ops       = set_msg_ops;
     
@@ -468,7 +474,7 @@ int token_reqgrp_manager_init(token_reqgrp_manager_t *manager, int tab_len,
     manager->version = 0;
     
     return err;
-    pthread_rwlock_destroy(&manager->lck);
+//    pthread_rwlock_destroy(&manager->lck);
 rwlock_init_failed:
     memory_cache_exit(&manager->resource_cache);
 resource_in_permission_init_failed:

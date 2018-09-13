@@ -8,7 +8,7 @@ static inline int up_cnt(int cnt, int max, bool *is_max)
 {
     int res = 0;
     *is_max = true;
-    if ( cnt < max )
+    if ( cnt + 1 < max )
     {
         *is_max = false;
         res = cnt + 1;
@@ -47,9 +47,4 @@ int count_controller_init(count_controller_t *controller, int interval_cnt)
 
 void count_controller_exit(count_controller_t *controller)
 {
-}
-
-void test_count_controller()
-{
- //FIXME muto
 }

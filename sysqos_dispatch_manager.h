@@ -29,16 +29,17 @@ typedef struct sysqos_disp_manager
     void (*resource_increase)(struct sysqos_disp_manager *manager,
                               unsigned long cost);
     
-    void (*resource_reduce)(struct sysqos_disp_manager *manager, long cost);
-    
-    void (*set_dispatcher_event_ops)(struct sysqos_disp_manager *manager,
-                                     dispatcher_event_ops_t *ops);
+    //TODO:not test
+//    void (*resource_reduce)(struct sysqos_disp_manager *manager, long cost);
+    //TODO:reduce ref not test
+//    void (*set_dispatcher_event_ops)(struct sysqos_disp_manager *manager,
+//                                     dispatcher_event_ops_t *ops);
     
     void (*set_msg_ops)(struct sysqos_disp_manager *manager, msg_ops_t *ops);
     
     /**私有属性或方法*******************************************************************************************/
     token_global_t         tokens;
-    dispatcher_event_ops_t *disp_ops;
+//    dispatcher_event_ops_t *disp_ops;
     msg_ops_t              *msg_ops;
     
     wait_increase_list_t lhead_wait_increase;
@@ -55,11 +56,10 @@ typedef struct sysqos_disp_manager
 
 int sysqos_disp_manager_init(sysqos_disp_manager_t *manager, int table_len,
                              unsigned long max_node_num, int update_interval,
-                             unsigned long min_rs_num, int rebalance_ratio);
+                             unsigned long min_rs_num/*, int rebalance_ratio*/);
 
 void sysqos_disp_manager_exit(sysqos_disp_manager_t *manager);
 
-void test_sysqos_disp_manager();
 
 #ifdef __cplusplus
 }

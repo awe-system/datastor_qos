@@ -7,13 +7,11 @@
 #include "sysqos_type.h"
 #include "hash_table.h"
 #include "sysqos_alloc.h"
-#include "sysqos_container_item.h"
 
 static int hinsert(hash_table_t *tab, void *id, void *pri)
 {
     int index = 0;
     assert(tab && tab->find && tab->hash);
-    
     index = tab->hash(id, tab->tab_len);
     assert(index < tab->tab_len);
     safe_rw_list_t *list = &tab->hash_table[index];

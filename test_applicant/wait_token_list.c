@@ -54,7 +54,7 @@ static inline token_manager_t *token_manager_by_event(struct msg_event_ops *ops)
 
 static void node_online(struct msg_event_ops *ops, void *id)
 {
-    int             err      = QOS_ERROR_OK;
+    int             err;
     token_manager_t *manager = token_manager_by_event(ops);
     
     nodereq_list_t *tokens = manager->cache.alloc(&manager->cache);
@@ -74,7 +74,7 @@ static void node_offline(struct msg_event_ops *ops, void *id)
 {
     token_manager_t *manager = token_manager_by_event(ops);
     void            *tokens  = NULL;
-    int             err      = QOS_ERROR_OK;
+    int             err;
     assert(manager->event_to_permission);
     pthread_rwlock_wrlock(&manager->lck);
     err = manager->tokens->erase(manager->tokens, id, &tokens);
@@ -83,7 +83,7 @@ static void node_offline(struct msg_event_ops *ops, void *id)
     {
         struct list_head head;
         LISTHEAD_INIT(&head);
-        ((nodereq_list_t *)tokens)->pop_all((nodereq_list_t *) tokens, &head);
+        ((nodereq_list_t *) tokens)->pop_all((nodereq_list_t *) tokens, &head);
         manager->event_to_permission
                 ->node_offline_done(manager->event_to_permission, &head);
         nodereq_list_exit((nodereq_list_t *) tokens);
@@ -93,7 +93,7 @@ static void node_offline(struct msg_event_ops *ops, void *id)
 
 static int tpush_back(struct token_manager *manager, resource_list_t *rs)
 {
-    int  err     = QOS_ERROR_OK;
+    int  err;
     void *tokens = NULL;
     pthread_rwlock_rdlock(&manager->lck);
     do
@@ -101,7 +101,7 @@ static int tpush_back(struct token_manager *manager, resource_list_t *rs)
         err = manager->tokens->find(manager->tokens, rs->rs.id, &tokens);
         if ( err )
         { break; }
-        ((nodereq_list_t *)tokens)->push_back((nodereq_list_t *) tokens, rs);
+        ((nodereq_list_t *) tokens)->push_back((nodereq_list_t *) tokens, rs);
     } while ( 0 );
     pthread_rwlock_unlock(&manager->lck);
     return err;
@@ -109,7 +109,7 @@ static int tpush_back(struct token_manager *manager, resource_list_t *rs)
 
 static int terase(struct token_manager *manager, resource_list_t *rs)
 {
-    int  err     = QOS_ERROR_OK;
+    int  err;
     void *tokens = NULL;
     pthread_rwlock_rdlock(&manager->lck);
     do
@@ -117,7 +117,7 @@ static int terase(struct token_manager *manager, resource_list_t *rs)
         err = manager->tokens->find(manager->tokens, rs->rs.id, &tokens);
         if ( err )
         { break; }
-        err = ((nodereq_list_t *)tokens)->erase((nodereq_list_t *) tokens, rs);
+        err = ((nodereq_list_t *) tokens)->erase((nodereq_list_t *) tokens, rs);
     } while ( 0 );
     pthread_rwlock_unlock(&manager->lck);
     return err;
@@ -125,7 +125,7 @@ static int terase(struct token_manager *manager, resource_list_t *rs)
 
 static resource_list_t *tfront(struct token_manager *manager, void *id)
 {
-    int             err     = QOS_ERROR_OK;
+    int             err;
     resource_list_t *rs     = NULL;
     void            *tokens = NULL;
     pthread_rwlock_rdlock(&manager->lck);
@@ -134,7 +134,7 @@ static resource_list_t *tfront(struct token_manager *manager, void *id)
         err = manager->tokens->find(manager->tokens, id, &tokens);
         if ( err )
         { break; }
-        rs = ((nodereq_list_t *)tokens)->front((nodereq_list_t *) tokens);
+        rs = ((nodereq_list_t *) tokens)->front((nodereq_list_t *) tokens);
     } while ( 0 );
     pthread_rwlock_unlock(&manager->lck);
     return rs;
@@ -142,7 +142,7 @@ static resource_list_t *tfront(struct token_manager *manager, void *id)
 
 static void tpop_front(struct token_manager *manager, void *id)
 {
-    int  err     = QOS_ERROR_OK;
+    int  err;
     void *tokens = NULL;
     pthread_rwlock_rdlock(&manager->lck);
     do
@@ -150,14 +150,14 @@ static void tpop_front(struct token_manager *manager, void *id)
         err = manager->tokens->find(manager->tokens, id, &tokens);
         if ( err )
         { break; }
-        ((nodereq_list_t *)tokens)->pop_front((nodereq_list_t *) tokens);
+        ((nodereq_list_t *) tokens)->pop_front((nodereq_list_t *) tokens);
     } while ( 0 );
     pthread_rwlock_unlock(&manager->lck);
 }
 
 static press_t tget_press(struct token_manager *manager, void *id)
 {
-    int     err = QOS_ERROR_OK;
+    int     err;
     press_t press;
     press.val = 0;
     void *tokens = NULL;
@@ -167,7 +167,8 @@ static press_t tget_press(struct token_manager *manager, void *id)
         err = manager->tokens->find(manager->tokens, id, &tokens);
         if ( err )
         { break; }
-        press = ((nodereq_list_t *)tokens)->get_press((nodereq_list_t *) tokens);
+        press = ((nodereq_list_t *) tokens)
+                ->get_press((nodereq_list_t *) tokens);
     } while ( 0 );
     pthread_rwlock_unlock(&manager->lck);
     return press;
@@ -191,10 +192,10 @@ static int token_manager_init(token_manager_t *manager,
                               int max_node_num)
 {
     int err = memory_cache_init(&manager->cache, sizeof(nodereq_list_t),
-                                max_node_num);
+                                (unsigned long) max_node_num);
     if ( err ) end_func(err, QOS_ERROR_MEMORY, memory_cache_init_failed);
     
-    manager->tokens = alloc_hash_table(tab_len, max_node_num);
+    manager->tokens = alloc_hash_table(tab_len, (unsigned long) max_node_num);
     if ( !manager->tokens )
         end_func(err, QOS_ERROR_MEMORY, alloc_hash_table_failed);
     
@@ -213,7 +214,7 @@ static int token_manager_init(token_manager_t *manager,
     manager->erase               = terase;
     
     return QOS_ERROR_OK;
-    pthread_rwlock_destroy(&manager->lck);
+//    pthread_rwlock_destroy(&manager->lck);
 pthread_rwlock_init_failed:
     free_hash_table(manager->tokens);
 alloc_hash_table_failed:
@@ -242,7 +243,6 @@ static void test_node_offline_done(struct token_manager_event *event,
     rs      = container_of(head->next, resource_list_t, list);
     for ( i = 0; i < TMP_QUEUE_LEN; ++i )
     {
-        unsigned long j = i;
         assert(rs);
         assert(rs->rs.id == (void *) 1);
         assert(rs->rs.cost == i + 1);
@@ -252,16 +252,14 @@ static void test_node_offline_done(struct token_manager_event *event,
 
 static void test_case_offline_done()
 {
-    int             err = QOS_ERROR_OK;
-    int             i   = 0;
+    int             err;
+    int             i = 0;
     resource_list_t rs[TMP_QUEUE_LEN];
     for ( i = 0; i < TMP_QUEUE_LEN; ++i )
     {
-        unsigned long j = i;
         rs[i].rs.id   = (void *) 1;
-        rs[i].rs.cost = i + 1;
+        rs[i].rs.cost = (unsigned long) (i + 1);
     }
-    resource_list_t *prs;
     manager->event.node_online(&manager->event, (void *) 1);
     
     for ( i = 0; i < TMP_QUEUE_LEN; ++i )
@@ -303,7 +301,7 @@ static void test_case_init_exit(token_manager_t *manager)
 
 static void test_case_regular_online_offline()
 {
-    int             err = QOS_ERROR_OK;
+    int             err;
     press_t         p;
     resource_list_t rs;
     resource_list_t *prs;
@@ -333,14 +331,13 @@ static void test_case_regular_online_offline()
 
 static void test_case_regular_push_pop()
 {
-    int             err = QOS_ERROR_OK;
-    int             i   = 0;
+    int             err;
+    int             i = 0;
     resource_list_t rs[TMP_QUEUE_LEN];
     for ( i = 0; i < TMP_QUEUE_LEN; ++i )
     {
-        unsigned long j = i;
         rs[i].rs.id   = (void *) 1;
-        rs[i].rs.cost = i + 1;
+        rs[i].rs.cost = (unsigned long) (i + 1);
     }
     resource_list_t *prs;
     manager->event.node_online(&manager->event, (void *) 1);
@@ -370,14 +367,13 @@ static void test_case_regular_push_pop()
 
 static void test_case_regular_push_erase()
 {
-    int             err = QOS_ERROR_OK;
-    int             i   = 0;
+    int             err;
+    int             i = 0;
     resource_list_t rs[TMP_QUEUE_LEN];
     for ( i = 0; i < TMP_QUEUE_LEN; ++i )
     {
-        unsigned long j = i;
         rs[i].rs.id   = (void *) 1;
-        rs[i].rs.cost = i + 1;
+        rs[i].rs.cost = (unsigned long) (i + 1);
     }
     resource_list_t *prs;
     manager->event.node_online(&manager->event, (void *) 1);
@@ -407,15 +403,15 @@ static void test_case_regular_push_erase()
 
 static void test_case_regular_press()
 {
-    int             err = QOS_ERROR_OK;
+    int             err;
     press_t         presses[TMP_QUEUE_LEN / 3];
-    int             i   = 0;
+    int             i = 0;
     resource_list_t rs[TMP_QUEUE_LEN];
     for ( i = 0; i < TMP_QUEUE_LEN; ++i )
     {
-        unsigned long j = i % (TMP_QUEUE_LEN / 3);
+        unsigned long j = (unsigned long) (i % (TMP_QUEUE_LEN / 3));
         rs[i].rs.id           = (void *) j;
-        rs[i].rs.cost         = i + 1;
+        rs[i].rs.cost         = (unsigned long) (i + 1);
         presses[j].type       = press_type_fifo;
         presses[j].fifo.depth = 0;
     }
@@ -423,7 +419,7 @@ static void test_case_regular_press()
     
     for ( i = 0; i < TMP_QUEUE_LEN; ++i )
     {//NOTE：可能node online多次 但不影响测试
-        unsigned long j = i % (TMP_QUEUE_LEN / 3);
+        unsigned long j = (unsigned long) (i % (TMP_QUEUE_LEN / 3));
         manager->event.node_online(&manager->event, rs[i].rs.id);
         err = manager->push_back(manager, rs + i);
         assert(err == 0);
@@ -447,7 +443,7 @@ static void test_case_regular_press()
     
     for ( i = 0; i < TMP_QUEUE_LEN / 3; ++i )
     {
-        unsigned long j = i;
+        unsigned long j = (unsigned long) i;
         assert(0 == manager->get_press(manager, (void *) j).fifo.depth);
         manager->event.node_offline(&manager->event, rs[i].rs.id);
     }
@@ -461,8 +457,8 @@ static void test_case_regular_press()
 
 int test_init()
 {
-    srand(time(0));
-    printf(YELLOW"--------------test_init----------------------:\n"RESET);
+    srand((unsigned int) time(0));
+    printf(YELLOW"--------------test_context_init----------------------:\n"RESET);
     test_case_init_exit(manager);
     return CUE_SUCCESS;
 }
@@ -474,7 +470,7 @@ static int test_clean()
     return CUE_SUCCESS;
 }
 
-void wait_list_suit_init(test_frame_t * frame)
+void wait_list_suit_init(test_frame_t *frame)
 {
     test_suit_t suit;
     

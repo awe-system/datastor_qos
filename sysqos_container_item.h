@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "list_head.h"
+#include "sysqos_type.h"
 
 typedef struct sysqos_container_item
 {

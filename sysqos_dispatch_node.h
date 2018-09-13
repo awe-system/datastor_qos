@@ -9,8 +9,6 @@
 #include "sysqos_nodereq_list.h"
 #include "sysqos_protocol.h"
 
-#define PERMISSION_MANAGER_ITEM_TEST
-
 #ifdef __cplusplus
 extern "C" {
 #endif

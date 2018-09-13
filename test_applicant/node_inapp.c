@@ -137,7 +137,7 @@ static void test_for_permission_item_exit(test_for_permission_item_t *test)
 static void test_case_alloc_free_small()
 {
     int                        alloc_success = 0;
-    int                        err           = QOS_ERROR_OK;
+    int                        err;
     int                        i             = 0;
     test_for_permission_item_t test;
     test_for_permission_item_init(&test, false);
@@ -171,7 +171,6 @@ static void test_case_alloc_free_small()
     
     do
     {
-        struct list_head *pos = NULL;
         struct list_head got_list;
         LISTHEAD_INIT(&got_list);
         token_req_t *rip = test_dequeue(&test);
@@ -264,7 +263,7 @@ test_try_free(dispatch_node_t *item, test_for_permission_item_t *test,
 static void test_case_alloc_free_queue()
 {
     int                        alloc_success = 0;
-    int                        err           = QOS_ERROR_OK;
+    int                        err;
     int                        i             = 0;
     test_for_permission_item_t test;
     test_for_permission_item_init(&test, true);
@@ -308,7 +307,7 @@ static void test_case_alloc_free_queue()
 static void test_case_alloc_free_queue_rand()
 {
     int                        alloc_success = 0;
-    int                        err           = QOS_ERROR_OK;
+    int                        err;
     int                        i             = 0;
     test_for_permission_item_t test;
     test_for_permission_item_init(&test, true);
@@ -333,7 +332,7 @@ static void test_case_alloc_free_queue_rand()
             alloc_success += test_try_free(item, &test, free_num);
             continue;
         }
-        
+        assert(rip);
         err = item->alloc_resource(item, &rip->token_need);
         test_enqueue(&test, rip);
         if ( err == QOS_ERROR_OK )
@@ -356,7 +355,7 @@ static void
 test_case_alloc_free_resource_changed_enough()
 {
     int                        alloc_success = 0;
-    int                        err           = QOS_ERROR_OK;
+    int                        err;
     int                        i             = 0;
     app2dispatch_t             atd;
     test_for_permission_item_t test;
@@ -404,7 +403,7 @@ static void test_case_alloc_free_pop_all()
 {
     int                        alloc_success = 0;
     int                        alloc_fail    = 0;
-    int                        err           = QOS_ERROR_OK;
+    int                        err;
     int                        i             = 0;
     test_for_permission_item_t test;
     test_for_permission_item_init(&test, false);
@@ -446,7 +445,7 @@ static void
 test_case_alloc_free_resource_changed()
 {
     int                        alloc_success = 0;
-    int                        err           = QOS_ERROR_OK;
+    int                        err;
     int                        i             = 0;
     test_for_permission_item_t test;
     test_for_permission_item_init(&test, true);
@@ -486,9 +485,9 @@ test_case_alloc_free_resource_changed()
 
 static int test_init()
 {
-    printf(YELLOW"--------------test_init------------:\n"RESET);
+    printf(YELLOW"--------------test_context_init------------:\n"RESET);
     
-    srand(time(0));
+    srand((unsigned int) time(0));
     test_case_init_exit(item);
     return CUE_SUCCESS;
 }

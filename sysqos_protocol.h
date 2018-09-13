@@ -17,8 +17,8 @@ typedef struct app2dispatch
 
 typedef struct dispatch2app
 {
-    unsigned long token_quota;
-    long          version;
+    long token_quota;
+    long version;
 } dispatch2app_t;
 
 static inline void init_app2dispatch(app2dispatch_t *atd)

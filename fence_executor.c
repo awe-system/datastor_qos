@@ -11,6 +11,7 @@ static void execute(struct fence_executor *executor, void *ctx)
     if ( __sync_bool_compare_and_swap(&executor->is_exe, false, true) )
     {
         executor->func(executor, ctx);
+        __sync_bool_compare_and_swap(&executor->is_exe, true, false);
     }
 }
 
@@ -24,9 +25,4 @@ int fence_executor_init(fence_executor_t *executor, fence_executor_func_t func)
 
 void fence_executor_exit(fence_executor_t *executor)
 {
-}
-
-void test_fence_executor(fence_executor_t *executor)
-{
-    //FIXME
 }

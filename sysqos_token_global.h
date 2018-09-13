@@ -33,15 +33,16 @@ typedef struct token_global
     
     unsigned long (*try_alloc)(struct token_global *tokens,
                                unsigned long cost);
-    
     //cant del zero
     void (*free)(struct token_global *tokens, unsigned long cost);
     
     void (*increase)(struct token_global *tokens, unsigned long units);
     
-    bool (*try_decrease)(struct token_global *tokens, unsigned long units);
+    //TODO:not test
+//    bool (*try_decrease)(struct token_global *tokens, unsigned long units);
     
-    void (*set_max_rsvr)(struct token_global *tokens, unsigned long max_rsvr);
+    //TODO:not test
+//    void (*set_max_rsvr)(struct token_global *tokens, unsigned long max_rsvr);
 } token_global_t;
 
 int token_global_init(token_global_t *left_tokens,
@@ -49,8 +50,6 @@ int token_global_init(token_global_t *left_tokens,
                       unsigned long min_per_node);
 
 void token_global_exit(token_global_t *left_tokens);
-
-void test_token_global();
 
 #ifdef __cplusplus
 }

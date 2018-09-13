@@ -7,7 +7,6 @@
 
 #ifndef QOS_TOKEN_MANAGER_H
 #define QOS_TOKEN_MANAGER_H
-#define TOKEN_MANAGER_TEST
 #ifdef __cplusplus
 extern "C" {
 #endif

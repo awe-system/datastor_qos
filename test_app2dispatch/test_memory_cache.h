@@ -9,8 +9,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include "sysqos_type.h"
 #include <sysqos_waitincrease_list.h>
-#include "list_head.h"
 #include "sysqos_alloc.h"
 #include "sysqos_common.h"
 #include "sysqos_test_lib.h"

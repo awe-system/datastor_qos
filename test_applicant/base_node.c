@@ -204,7 +204,7 @@ static void rcvd(struct msg_event_ops *ops, void *id,
         is_resource_increased =
                 ((dispatch_base_node_t *) desc)->check_update_quota_version(
                         (dispatch_base_node_t *) desc,
-                        app.token_quota,
+                        (unsigned long) app.token_quota,
                         app.version, &is_reset);
     }
     pthread_rwlock_unlock(&manager->lck);
@@ -885,7 +885,7 @@ static void test_case_regular_check_free()
 
 static int test_init()
 {
-    printf(YELLOW"--------------test_init----------------:\n"RESET);
+    printf(YELLOW"--------------test_context_init----------------:\n"RESET);
     test_case_init_exit(manager);
     
     return CUE_SUCCESS;

@@ -5,8 +5,7 @@
 #ifndef QOS_HASH_TABLE_H
 #define QOS_HASH_TABLE_H
 
-#include <sys/types.h>
-#include "list_head.h"
+#include "sysqos_type.h"
 #include "memory_cache.h"
 #include "sysqos_common.h"
 #include "safe_rw_list.h"
@@ -40,8 +39,6 @@ typedef struct hash_table
     void (*for_each_do)(struct hash_table *tab,void *ctx,for_each_dofunc_t dofunc);
     /*************************************/
 #ifdef HASH_TABLE_TEST
-    
-    void (*dump)(struct hash_table *tab);
 
 #endif
     memory_cache_t cache;

@@ -6,10 +6,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "sysqos_test_lib.h"
 #include "sysqos_alloc.h"
-#include "sysqos_common.h"
 
 static void test_thread_init(test_thread_t *thread,
                              int thread_num, test_thread_func func,
@@ -181,29 +179,29 @@ static void test_try_find_items_lock_erase(struct test_map *tm, INOUT
     pthread_rwlock_unlock(&tm->lck);
     *max_pair_num = j;
 }
-
-static void test_try_update_items_lock_erase(struct test_map *tm, INOUT
-                                             unsigned long *max_pair_num, OUT
-                                             test_key_pair_t pairs[])
-{
-    unsigned long i = 0, j = 0;
-    assert(max_pair_num && *max_pair_num);
-    
-    pthread_rwlock_wrlock(&tm->lck);
-    for ( i = 0, j = 0; i < tm->max_key_num && j < *max_pair_num; ++i )
-    {
-        if ( tm->in_tab[i] && !tm->lock_tab[i] )
-        {
-            tm->vals[i] = rand();
-            ++tm->lock_tab[i];
-            pairs[j].key = i;
-            pairs[j].val = tm->vals[i];
-            ++j;
-        }
-    }
-    pthread_rwlock_unlock(&tm->lck);
-    *max_pair_num = j;
-}
+//
+//static void test_try_update_items_lock_erase(struct test_map *tm, INOUT
+//                                             unsigned long *max_pair_num, OUT
+//                                             test_key_pair_t pairs[])
+//{
+//    unsigned long i = 0, j = 0;
+//    assert(max_pair_num && *max_pair_num);
+//
+//    pthread_rwlock_wrlock(&tm->lck);
+//    for ( i = 0, j = 0; i < tm->max_key_num && j < *max_pair_num; ++i )
+//    {
+//        if ( tm->in_tab[i] && !tm->lock_tab[i] )
+//        {
+//            tm->vals[i] = rand();
+//            ++tm->lock_tab[i];
+//            pairs[j].key = i;
+//            pairs[j].val = tm->vals[i];
+//            ++j;
+//        }
+//    }
+//    pthread_rwlock_unlock(&tm->lck);
+//    *max_pair_num = j;
+//}
 
 
 static void test_unlock_erase(struct test_map *tm, IN unsigned long pair_num, IN
@@ -249,7 +247,6 @@ void test_map_init(test_map_t *tm, unsigned long max_key_num)
     
     tm->max_key_num = max_key_num;
 //    srand(time(0));
-    pthread_rwlock_t lck;
     tm->vals = (unsigned long *) qos_alloc(sizeof(unsigned long) * max_key_num);
     assert(tm->vals);
     memset(tm->vals, 0, sizeof(unsigned long) * max_key_num);
@@ -275,7 +272,7 @@ void test_map_init(test_map_t *tm, unsigned long max_key_num)
     tm->try_get_items_insert        = test_try_get_items_insert;
     tm->complete_insert             = test_complete_insert;
     tm->try_find_items_lock_erase   = test_try_find_items_lock_erase;
-    tm->try_update_items_lock_erase = test_try_update_items_lock_erase;
+//    tm->try_update_items_lock_erase = test_try_update_items_lock_erase;
     tm->unlock_erase                = test_unlock_erase;
 //    tm->dump                        = test_dump;
     
@@ -290,17 +287,17 @@ void test_map_exit(test_map_t *tm)
     qos_free(tm->out_tab);
     qos_free(tm->lock_tab);
 }
-
-void test_dump_pairs(unsigned long num, test_key_pair_t *pairs)
-{
-    unsigned long i = 0;
-    printf(GREEN"----num%lu------------------------------------------\n"RESET,
-           num);
-    for ( i = 0; i < num; ++i )
-    {
-        printf("%lu:%lu ", pairs[i].key, pairs->val);
-        if ( i % 16 == 15 )
-        { printf("\n"); }
-    }
-    printf("\n");
-}
+//
+//void test_dump_pairs(unsigned long num, test_key_pair_t *pairs)
+//{
+//    unsigned long i = 0;
+//    printf(GREEN"----num%lu------------------------------------------\n"RESET,
+//           num);
+//    for ( i = 0; i < num; ++i )
+//    {
+//        printf("%lu:%lu ", pairs[i].key, pairs->val);
+//        if ( i % 16 == 15 )
+//        { printf("\n"); }
+//    }
+//    printf("\n");
+//}

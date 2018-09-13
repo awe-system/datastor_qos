@@ -10,7 +10,6 @@
 #ifndef QOS_QOS_PERMISSION_MANAGER_H
 #define QOS_QOS_PERMISSION_MANAGER_H
 
-#define TOKEN_GRP_MANAGER_TEST
 #ifdef __cplusplus
 extern "C" {
 #endif

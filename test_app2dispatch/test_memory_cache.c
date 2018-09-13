@@ -1,7 +1,6 @@
 // Created by root on 18-9-4.
 //
 
-#include <assert.h>
 #include "test_frame.h"
 #include "test_memory_cache.h"
 
@@ -45,18 +44,19 @@ static void *alloc_thread(void *arg)
         }
         cache->free(cache, tmp);
     }
+    return NULL;
 }
 
 static memory_cache_t cache;
 
 static int test_init()
 {
-    int err = CUE_SUCCESS;
-    printf(YELLOW"\n--------------test_init--------------------:\n"RESET);
+    int err;
+    printf(YELLOW"\n--------------test_context_init--------------------:\n"RESET);
     err = memory_cache_init(&cache, test_unit_size, test_cache_unit);
     if ( err )
     { return CUE_NOMEMORY; }
-    return err;
+    return CUE_SUCCESS;
 }
 
 static int test_clean()

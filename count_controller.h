@@ -23,8 +23,6 @@ int count_controller_init(count_controller_t *controller,int interval_cnt);
 
 void count_controller_exit(count_controller_t *controller);
 
-void test_count_controller();
-
 #ifdef __cplusplus
 }
 #endif

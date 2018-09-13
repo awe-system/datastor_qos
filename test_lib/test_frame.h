@@ -5,6 +5,7 @@
 #ifndef TEST_QOS_TEST_FRAME_H
 #define TEST_QOS_TEST_FRAME_H
 #define TEST_CONCURRENCY
+#include <stdio.h>
 #include "CUnit/CUnit.h"
 
 typedef int (*init_suit_func_t)(void);
@@ -12,7 +13,6 @@ typedef int (*init_suit_func_t)(void);
 typedef int (*clean_suit_func_t)(void);
 
 typedef void (*case_func_t)(void);
-
 
 typedef struct test_case
 {
