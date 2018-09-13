@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<funcs>
+    <!--value_str:   C++type        python
+        string      string        ""
+        int         int           int
+        long        long          long
+        ulong       unsigned long ulong
+        uint        unsigned int  uint
+        bool        bool          bool
+        list_string list<string>  [""]     cannot return in c++
+        json        json_obj      all
+     -->
+    <!--type: in out in/out
+
+     -->
+    <sock name="/tmp/sysqos_demo.socket" type="local"/>
+    <client type="python" filename="qos_cli"/>
+    <server type="C++" namespace="sysqos_demo_cmds" filename="sysqos_demo_cmds"/>
+    <func name="dumps">
+        <param name="all_info" value="json" type="out"/>
+    </func>
+</funcs>
