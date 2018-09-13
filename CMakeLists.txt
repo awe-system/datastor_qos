@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project(test_qos)
+project(datastor_qos)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -29,6 +29,7 @@ set(SOURCE_FILES
 include_directories("test_lib")
 include_directories(".")
 include_directories("/usr/local/include")
+include_directories("/usr/local/include/lt_data")
 
 add_library(libtest test_lib/sysqos_test_lib.c test_lib/sysqos_test_lib.h test_lib/test_frame.c test_lib/test_frame.h sysqos_type.h)
 target_link_libraries(libtest pthread)
@@ -39,7 +40,8 @@ target_link_libraries(libqos pthread libtest)
 add_compile_options("-fprofile-arcs")
 add_compile_options("-ftest-coverage")
 
-add_executable(test_app2disp ${SOURCE_FILES} ${CunitSource} test_app2dispatch/app2disp_test.c
+add_executable(test_app2disp ${SOURCE_FILES} ${CunitSource}
+        test_app2dispatch/app2disp_test.c
         test_app2dispatch/test_memory_cache.c test_app2dispatch/test_memory_cache.h
         test_app2dispatch/test_rw_list.c test_app2dispatch/test_rw_list.h
         test_app2dispatch/test_hashtab.c test_app2dispatch/test_hashtab.h ${CUnit}
@@ -54,3 +56,8 @@ add_executable(test_app2disp ${SOURCE_FILES} ${CunitSource} test_app2dispatch/ap
         test_dispatch/wait_increase.c test_dispatch/wait_increase.h
         test_dispatch/token_global.c test_dispatch/token_global.h test_dispatch/dispatch_manager.c test_dispatch/dispatch_manager.h)
 target_link_libraries(test_app2disp pthread  libtest cunit gcov)
+
+
+add_executable(demo ${SOURCE_FILES} demo/sysqos_demo_cmds.h demo/sysqos_demo_cmds.cpp
+        demo/demo.cpp demo/demo.h test_lib/sysqos_test_lib.c test_lib/sysqos_test_lib.h)
+target_link_libraries(demo pthread  libtest cunit gcov boost_system boost_thread datastor_utils)
