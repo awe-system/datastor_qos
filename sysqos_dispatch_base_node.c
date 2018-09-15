@@ -42,8 +42,8 @@ static inline void update_quota_target_force(dispatch_base_node_t *base_node)
     }
     else
     {
-        base_node->token_quota_target = min(base_node->token_quota_target,
-                                            max(base_node->token_quota_new,
+        base_node->token_quota_target = MIN(base_node->token_quota_target,
+                                            MAX(base_node->token_quota_new,
                                                 base_node->token_quota_target
                                                 - base_node->respond_step));
     }
@@ -59,8 +59,8 @@ static inline void update_quota_target(dispatch_base_node_t *base_node)
     }
     else
     {
-        base_node->token_quota_target = min(base_node->token_quota_target,
-                                            max(base_node->token_quota_new,
+        base_node->token_quota_target = MIN(base_node->token_quota_target,
+                                            MAX(base_node->token_quota_new,
                                                 base_node->token_inuse +
                                                 base_node->respond_step));
     }
@@ -72,14 +72,14 @@ static void update_quota(dispatch_base_node_t *base_node)
     
     if ( base_node->token_quota_target == base_node->token_quota_new )
     {
-        base_node->token_quota = min(base_node->token_quota,
-                                     max(base_node->token_inuse,
+        base_node->token_quota = MIN(base_node->token_quota,
+                                     MAX(base_node->token_inuse,
                                          base_node->token_quota_new));
     }
     else
     {
-        base_node->token_quota = min(base_node->token_quota,
-                                     max(base_node->token_inuse,
+        base_node->token_quota = MIN(base_node->token_quota,
+                                     MAX(base_node->token_inuse,
                                          base_node->token_quota_target +
                                          base_node->respond_step));
     }

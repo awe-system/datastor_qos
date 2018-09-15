@@ -109,7 +109,7 @@ static void *insert_thread_func(void *arg)
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
-        unsigned long tmp_len = min(left_num, item_piece);
+        unsigned long tmp_len = MIN(left_num, item_piece);
         test.try_get_items_insert(&test, &tmp_len, pairs);
         if ( tmp_len == 0 )
         {
@@ -132,7 +132,7 @@ static void *erase_thread_func(void *arg)
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
-        unsigned long tmp_len = min(left_num, item_piece);
+        unsigned long tmp_len = MIN(left_num, item_piece);
         test.try_get_items_erase(&test, &tmp_len, pairs);
         if ( tmp_len == 0 )
         {
@@ -154,7 +154,7 @@ static void *find_thread_func(void *arg)
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
-        unsigned long tmp_len = min(left_num, item_piece);
+        unsigned long tmp_len = MIN(left_num, item_piece);
         test.try_find_items_lock_erase(&test, &tmp_len, pairs);
         if ( tmp_len == 0 )
         {

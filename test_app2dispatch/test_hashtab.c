@@ -89,7 +89,7 @@ void test_case_regular_find()
     printf("[test_case_regular_find] %s[OK]%s\n", GREEN, RESET);
 }
 
-#define min(a, b) ((a)<(b)?(a):(b))
+#define MIN(a, b) ((a)<(b)?(a):(b))
 
 void *insert_thread_func(void *arg)
 {
@@ -99,7 +99,7 @@ void *insert_thread_func(void *arg)
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
-        unsigned long tmp_len = (unsigned long) min(left_num, item_piece);
+        unsigned long tmp_len = (unsigned long) MIN(left_num, item_piece);
         test.try_get_items_insert(&test, &tmp_len, pairs);
         if ( tmp_len == 0 )
         {
@@ -122,7 +122,7 @@ void *erase_thread_func(void *arg)
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
-        unsigned long tmp_len = (unsigned long) min(left_num, item_piece);
+        unsigned long tmp_len = (unsigned long) MIN(left_num, item_piece);
         test.try_get_items_erase(&test, &tmp_len, pairs);
         if ( tmp_len == 0 )
         {
@@ -144,7 +144,7 @@ void *find_thread_func(void *arg)
     test_key_pair_t pairs[item_piece];
     while ( left_num > 0 )
     {
-        unsigned long tmp_len = (unsigned long) min(left_num, item_piece);
+        unsigned long tmp_len = (unsigned long) MIN(left_num, item_piece);
         test.try_find_items_lock_erase(&test, &tmp_len, pairs);
         if ( tmp_len == 0 )
         {

@@ -46,7 +46,7 @@ static void alloc_from_rsvr(struct token_global *tokens, app_node_t *node)
     
     assert(node->token_quota <= tokens->default_token_min);
     
-    this_token            = min(tokens->app_token_rsvr,
+    this_token            = MIN(tokens->app_token_rsvr,
                                 tokens->default_token_min - node->token_quota);
     
     tokens->app_token_rsvr -= this_token;
@@ -75,7 +75,7 @@ static inline unsigned long free_to_rsvr(struct token_global *tokens,
                                   unsigned long token_left)
 {
     unsigned long this_token = 0;
-    this_token = min(tokens->app_max_token_rsvr - tokens->app_token_rsvr,
+    this_token = MIN(tokens->app_max_token_rsvr - tokens->app_token_rsvr,
                      token_left);
     tokens->app_token_rsvr += this_token;
     node->token_quota -= this_token;
@@ -151,7 +151,7 @@ static void offline(struct token_global *tokens, app_node_t *node)
     assert(tokens->app_num_cur > 0);
     sysqos_spin_lock(&tokens->lck);
     --tokens->app_num_cur;
-    token_static  = min(node->token_quota, tokens->default_token_min);
+    token_static  = MIN(node->token_quota, tokens->default_token_min);
     token_dynamic = node->token_quota - token_static;
     
     free_to_rsvr_static(tokens, node, &token_static);
@@ -172,7 +172,7 @@ static unsigned long try_alloc(struct token_global *tokens,
                                unsigned long cost)
 {
     sysqos_spin_lock(&tokens->lck);
-    unsigned long res = min(tokens->token_free, cost);
+    unsigned long res = MIN(tokens->token_free, cost);
     tokens->token_free -= res;
     sysqos_spin_unlock(&tokens->lck);
     return res;
@@ -186,7 +186,7 @@ static void gfree(struct token_global *tokens, unsigned long cost)
         unsigned long token_need = tokens->token_dynamic -
                                    tokens->token_dynamic_new;
         
-        unsigned long token_avaliable = min(token_need, cost);
+        unsigned long token_avaliable = MIN(token_need, cost);
         
         cost -= token_avaliable;
         tokens->token_dynamic -= token_avaliable;
@@ -201,7 +201,7 @@ static void increase(struct token_global *tokens, unsigned long units)
     unsigned long token_rsvr_increase;
     sysqos_spin_lock(&tokens->lck);
     tokens->token_total += units;
-    token_rsvr_increase = min(tokens->app_max_token_rsvr,
+    token_rsvr_increase = MIN(tokens->app_max_token_rsvr,
                               tokens->app_token_rsvr + units)
                           - tokens->app_token_rsvr;
     tokens->app_token_rsvr += token_rsvr_increase;
@@ -214,7 +214,7 @@ static void increase(struct token_global *tokens, unsigned long units)
 //static bool could_decrease(struct token_global *tokens,
 //                           unsigned long units)
 //{
-//    if ( min(tokens->token_dynamic, tokens->token_dynamic_new) - units <
+//    if ( MIN(tokens->token_dynamic, tokens->token_dynamic_new) - units <
 //         tokens->app_max_token_rsvr - tokens->app_token_rsvr )
 //    {
 //        return false;
@@ -230,7 +230,7 @@ static void increase(struct token_global *tokens, unsigned long units)
 //    {
 //        tokens->token_dynamic_new -= units;
 //        tokens->token_dynamic -= units;
-//        tokens->token_free -= min(units, tokens->token_free);
+//        tokens->token_free -= MIN(units, tokens->token_free);
 //        tokens->token_total -= units;
 //        sysqos_spin_unlock(&tokens->lck);
 //        return true;

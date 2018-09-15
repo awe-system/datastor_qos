@@ -372,7 +372,7 @@ static void test_case_regular_rcvd_reduce()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = try_alloc_resource(manager, &rs);
         assert(err == 0);
@@ -405,7 +405,7 @@ static void test_case_regular_rcvd_reduce()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
@@ -428,7 +428,7 @@ static void test_case_regular_rcvd_reduce()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs, &could_alloc);
         assert(err == 0);
@@ -471,7 +471,7 @@ static void test_case_rcvd_reduce_alloc()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = try_alloc_resource(manager, &rs);
         assert(err == 0);
@@ -503,7 +503,7 @@ static void test_case_rcvd_reduce_alloc()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
@@ -528,7 +528,7 @@ static void test_case_rcvd_reduce_alloc()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
@@ -551,7 +551,7 @@ static void test_case_rcvd_reduce_alloc()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
@@ -594,7 +594,7 @@ static void test_case_regular_reset()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = try_alloc_resource(manager, &rs);
         assert(err == 0);
@@ -620,7 +620,7 @@ static void test_case_regular_reset()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
@@ -639,7 +639,7 @@ static void test_case_regular_reset()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs,&could_alloc);
         assert(err == 0);
@@ -680,7 +680,7 @@ static void test_case_regular_rcvd_increase()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = try_alloc_resource(manager, &rs);
         assert(err == 0);
@@ -710,7 +710,7 @@ static void test_case_regular_rcvd_increase()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = try_alloc_resource(manager, &rs);
         assert(err == 0);
@@ -751,7 +751,7 @@ static void test_case_regular_alloc_free()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = try_alloc_resource(manager, &rs);
         assert(err == 0);
@@ -773,7 +773,7 @@ static void test_case_regular_alloc_free()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs, &could_alloc);
         assert(err == 0);
@@ -836,7 +836,7 @@ static void test_case_regular_check_free()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = check_alloc_resource(manager, &rs);
         assert(err == 0);
@@ -863,7 +863,7 @@ static void test_case_regular_check_free()
         {
             break;
         }
-        rs.cost = min(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
+        rs.cost = MIN(rs_cost_list[i % RESOURCE_COST_LIST_NUM], left_len);
         rs.id   = (void *) 1;
         err = free_resource(manager, &rs, &could_alloc);
         assert(err == 0);

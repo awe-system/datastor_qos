@@ -8,7 +8,7 @@
         uint        unsigned int  uint
         bool        bool          bool
         list_string list<string>  [""]     cannot return in c++
-        json        json_obj      all
+        json        json_obj      all      cannot send from python
      -->
     <!--type: in out in/out
 
@@ -18,5 +18,14 @@
     <server type="C++" namespace="sysqos_demo_cmds" filename="sysqos_demo_cmds"/>
     <func name="dumps">
         <param name="all_info" value="json" type="out"/>
+    </func>
+    <func name="tasks">
+        <param name="tasks_info" value="json" type="out"/>
+    </func>
+    <func name="add_tasks">
+        <param name="task_string" value="string" type="in"/>
+    </func>
+    <func name="servers">
+        <param name="ino" value="json" type="out"/>
     </func>
 </funcs>

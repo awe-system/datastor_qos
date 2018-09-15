@@ -43,7 +43,7 @@ static void get_protocol(app_node_t *node, dispatch2app_t *d2a)
 {
     sysqos_spin_lock(&node->lck);
     d2a->version     = node->version;
-    d2a->token_quota = min(node->token_quota_new, node->token_quota);
+    d2a->token_quota = MIN(node->token_quota_new, node->token_quota);
     sysqos_spin_unlock(&node->lck);
 }
 
@@ -86,7 +86,7 @@ static inline unsigned long new_quota_under_limit(struct app_node *node,
 {
     if ( node->limit.max > 0 )//过滤超过最大值的设置
     {
-        token_quota_new = min(node->limit.max, token_quota_new);
+        token_quota_new = MIN(node->limit.max, token_quota_new);
     }
     return token_quota_new;
 }
@@ -142,7 +142,7 @@ static unsigned long update_quota_after_rcvd(app_node_t *node,
                                              unsigned long confirm_token)
 {
     unsigned long new_free_size = 0;
-    unsigned long new_quota = max(confirm_token, node->token_quota_new);
+    unsigned long new_quota = MAX(confirm_token, node->token_quota_new);
     //只有变小才有意义
     if ( node->token_quota > new_quota )
     {

@@ -3,6 +3,8 @@ project(datastor_qos)
 
 set(CMAKE_CXX_STANDARD 11)
 
+add_definitions(-std=c++11)
+
 set(CunitSource
         /usr/local/lib/libcunit.la)
 
@@ -55,9 +57,9 @@ add_executable(test_app2disp ${SOURCE_FILES} ${CunitSource}
         test_dispatch/node_indisp.c test_dispatch/node_indisp.h
         test_dispatch/wait_increase.c test_dispatch/wait_increase.h
         test_dispatch/token_global.c test_dispatch/token_global.h test_dispatch/dispatch_manager.c test_dispatch/dispatch_manager.h)
-target_link_libraries(test_app2disp pthread  libtest cunit gcov)
+target_link_libraries(test_app2disp pthread  libtest gcov)
 
 
-add_executable(demo ${SOURCE_FILES} demo/sysqos_demo_cmds.h demo/sysqos_demo_cmds.cpp
-        demo/demo.cpp demo/demo.h test_lib/sysqos_test_lib.c test_lib/sysqos_test_lib.h)
-target_link_libraries(demo pthread  libtest cunit gcov boost_system boost_thread datastor_utils)
+add_executable(demo ${SOURCE_FILES} ${CunitSource} demo/sysqos_demo_cmds.h demo/sysqos_demo_cmds.cpp
+        demo/demo.cpp demo/demo.h test_lib/sysqos_test_lib.c test_lib/sysqos_test_lib.h demo/client.cpp demo/client.h demo/server.cpp demo/server.h demo/client_group.cpp demo/client_group.h demo/server_group.cpp demo/server_group.h demo/demo_obj.cpp demo/demo_obj.h demo/myevent_hander.cpp demo/myevent_hander.h demo/task.cpp demo/task.h demo/task_group.cpp demo/task_group.h demo/cli_ser.cpp demo/cli_ser.h demo/circle_increse_safe.cpp demo/circle_increse_safe.h demo/utime.cpp demo/utime.h demo/Timer.cpp demo/Timer.h)
+target_link_libraries(demo pthread  libtest  gcov boost_system boost_thread datastor_utils)
