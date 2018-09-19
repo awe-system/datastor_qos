@@ -29,14 +29,17 @@ static void *demo_func(void *pdemo)
     return NULL;
 }
 
-#define CLIENT_GROUP_RUN_THREADS 1
-#define SERVER_THREAD_NUM 6
-#define CLINT_THREAD_NUM  6
-#define MAX_CLIENT_NUM       6
-#define MAX_SERVER_NUM       6
-#define MAX_RS_IN_SERVER     10000
+#include <awe_conf/env.h>
+
+env demo_disp_thread("demo", "demo_disp_thread");
+env demo_server_thread("demo", "demo_server_thread");
+env demo_client_thread("demo", "demo_client_thread");
+env demo_client_num("demo", "demo_client_num");
+env demo_server_num("demo", "demo_server_num");
+env demo_max_rs_inserver("demo", "demo_max_rs_inserver");
+env demo_task_retry("demo", "demo_task_retry");
+
 #define USECS_PER_IO         1
-#define TASK_RETRY_NUM       3
 #define TASK_GRP_RETRY_NUM   3
 static bool is_qos_open = false;
 
@@ -52,9 +55,12 @@ public:
 
 int main(int argc, char *argv[])
 {
-    client_group cli_grp(MAX_CLIENT_NUM, is_qos_open, TASK_GRP_RETRY_NUM,
-                         TASK_RETRY_NUM);
-    server_group srv_grp(MAX_SERVER_NUM, is_qos_open, MAX_RS_IN_SERVER,
+    client_group
+                 cli_grp
+            (demo_client_num.get_int(), is_qos_open, TASK_GRP_RETRY_NUM,
+             demo_task_retry.get_int());
+    server_group srv_grp(demo_server_num.get_int(), is_qos_open,
+                         demo_max_rs_inserver.get_int(),
                          USECS_PER_IO);
     
     demo_obj       demo(&cli_grp, &srv_grp);
@@ -65,9 +71,11 @@ int main(int argc, char *argv[])
     test_threads_t threads;
     test_threads_init(&threads);
     
-    threads.add_type(&threads, CLIENT_GROUP_RUN_THREADS, demo_func, &demo);
-    threads.add_type(&threads, CLINT_THREAD_NUM, client_group_func, &cli_grp);
-    threads.add_type(&threads, SERVER_THREAD_NUM, server_group_func, &srv_grp);
+    threads.add_type(&threads, demo_disp_thread.get_int(), demo_func, &demo);
+    threads.add_type(&threads, demo_client_thread.get_int(), client_group_func,
+                     &cli_grp);
+    threads.add_type(&threads, demo_server_thread.get_int(), server_group_func,
+                     &srv_grp);
     threads.run(&threads);
     test_threads_exit(&threads);
     return 0;

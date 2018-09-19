@@ -24,6 +24,12 @@ def tab_func(s):
     res = s + "\t"
     return res
 
+def tab2_func(s):
+    if(len(s) >= 8 ):
+        return tab_func(s)
+    else:
+        return tab_func(tab_func(s))
+
 def fail_tab(s):
     res = tab_func(s)
     int_val = int(s)
@@ -34,7 +40,7 @@ def fail_tab(s):
 printtab = [
     ["client", "cli", tab_func],
     ["server", "serv", tab_func],
-    ["retry", "fail", fail_tab],
+    ["retry", "retry", fail_tab],
     ["wait_token", "wait", tab_func],
     ["out_standing", "out", tab_func],
     ["net_send", "snd", tab_func],
@@ -42,8 +48,11 @@ printtab = [
     ["wait_disk", "disk", tab_func],
     ["complete", "done", tab_func],
     ["total_pending", "pend", tab_func],
-    ["t_usec", "task_usec", tab_func],
+    ["t_usec", "task_delay", tab2_func],
     ["t_n", "all", tab_func],
+    ["last_rcvid", "rcvid", fail_tab],
+    ["last_failid", "failid", fail_tab],
+    ["fail_num", "fail", fail_tab],
 ]
 
 

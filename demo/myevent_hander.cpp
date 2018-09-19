@@ -22,31 +22,13 @@ int myevent_hander::add_tasks(string &task_string)
 {
     json_obj obj;
     obj.loads(task_string);
-    try
-    {
-        for(const json_obj &task_obj : obj.array_val)
-        {
-            add_task(task_obj);
-        }
-        return 0;
-    }
-    catch (...)
-    {
-        return -1;
-    }
-    
+    demo->addtasks(obj);
+    return ERROR_TYPE_OK;
 }
 
 myevent_hander::myevent_hander(demo_obj *_demo)
 {
     demo = _demo;
-}
-
-void myevent_hander::add_task(const json_obj &obj)
-{
-    demo->addtasks((const int) obj["task_num"].get_number(),
-                   (const int) obj["task_cost"].get_number(),
-                   obj["c_s_pairs"]);
 }
 
 int myevent_hander::tasks(json_obj &tasks_info)

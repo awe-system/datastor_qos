@@ -14,7 +14,7 @@ class complete_task_hook
 {
 public:
     virtual void task_completed(void ){}
-    virtual void task_final(task_group *tgrp,bool is_fail) = 0;
+    virtual void task_final(task_group *tgrp) = 0;
 };
 
 class client
@@ -30,8 +30,7 @@ class client
     void snd_tasks(task_group *tgrp);
     int grp_retry;
     int task_retry;
-    void final_task(task *t);
-    bool is_grp_final(task_group *grp,bool &is_ok);
+    bool final_task(task *t);
 public:
     client(const string &_name, bool qos_open, int _grp_retry,
            int _task_retry, complete_task_hook *_hook);

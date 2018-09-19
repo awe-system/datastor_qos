@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <sysqos_common.h>
+#include <awe_conf/env.h>
 #include "client.h"
 #include "server.h"
 
@@ -21,7 +22,7 @@ bool client::could_snd(task_group *tgrp)
     }
     return true;
 }
-
+env demo_retry_interval("demo","demo_retry_interval");
 bool client::run_once()
 {
     unique_lock<std::mutex> lck(m);
@@ -34,17 +35,33 @@ bool client::run_once()
     {
         task *t = complete_list.front();
         complete_list.pop_front();
-        cout << RED << "client::run_once " << RESET"(" << t->task_id << ")"
-                << name() << "->" << t->srv->name() << " retry_num("
-                << t->retry_num
-                << ")task_retry:" << task_retry << endl;
+//        cout << RED << "client::run_once " << RESET"(" << t->task_id << ")"
+//                << name() << "->" << t->srv->name() << " retry_num("
+//                << t->retry_num
+//                << ")task_retry:" << task_retry << endl;
         if ( t->retry_num > 0 && t->retry_num < task_retry )
         {
+            if(t->retry_num > 1)
+            {
+                t->retry_num = t->retry_num;
+            }
+            lck.unlock();
+            if(demo_retry_interval.get_int() > 0)
+            {
+                usleep(demo_retry_interval.get_int());
+            }
             retry_task(t);
+            return true;
         }
-        else
+        else if ( t->retry_num > 0 )
         {
-            final_task(t);
+            t->set_stat(task_stat_complete);
+        }
+        if ( final_task(t) )
+        {
+            lck.unlock();
+            hook->task_final(t->grp);
+            lck.lock();
         }
     }
     if ( !tasks_list.empty() )
@@ -53,6 +70,7 @@ bool client::run_once()
         tasks_list.pop_front();
         if ( could_snd(tgrp) )
         {
+            lck.unlock();
             snd_tasks(tgrp);
         }
     }
@@ -84,66 +102,33 @@ void client::snd_tasks(task_group *tgrp)
 
 void client::retry_task(task *t)
 {
+    unique_lock<std::mutex> lck(m);
+//    cout << RED << "client::retry_task " << RESET"(" << t->task_id << ")"
+//            << name() << "->" << t->srv->name() << " retry_num("
+//            << t->retry_num
+//            << ")task_retry:(" << task_retry << ") grp_retry_num:"
+//            << t->grp->retry_num << endl;
     t->set_stat(task_stat_net_send);
+    lck.unlock();
     t->srv->submit_task(t);
 }
 
 void client::complete_task(task *t)
 {
     unique_lock<std::mutex> lck(m);
+//    cout << YELLOW << "client::complete_task (" << t->task_id << ")"<<RESET
+//            << name() << " -> "
+//            << t->srv->name() << ":"
+//            << t->string_bytaskstat(t->state)
+//            << "| retry_num " << t->retry_num << "| grp_retry "
+//            << t->grp->retry_num << "| complete_list:"
+//            << complete_list.size() << endl;
     complete_list.push_back(t);
-    cout << YELLOW << "client::complete_task " << RESET << name() << " -> "
-            << t->srv->name() << ":"
-            << t->string_bytaskstat(t->state)
-            << "| retry_num " << t->retry_num << "| grp_retry "
-            << t->grp->retry_num << "| complete_list:"
-            << complete_list.size() << endl;
     lck.unlock();
-    hook->task_completed();
+//    hook->task_completed();
 }
 
-void client::final_task(task *t)
+bool client::final_task(task *t)
 {
-    bool is_ok = false;
-    cout << BLUE << "client::final_task " << RESET << name() << " -> "
-            << t->srv->name() << ":"
-            << t->string_bytaskstat(t->state)
-            << "| retry_num " << t->retry_num << "| grp_retry "
-            << t->grp->retry_num << "| complete_list:"
-            << complete_list.size() << endl;
-    t->set_stat(task_stat_complete);
-    if ( !is_grp_final(t->grp, is_ok) )
-    {
-        return;
-    }
-    if ( is_ok )
-    {
-        hook->task_final(t->grp, false);
-    }
-    else if ( t->grp->retry_num < grp_retry )
-    {
-        ++t->grp->retry_num;
-        t->grp->set_stat(task_group_stat_wait_token);
-        tasks_list.push_back(t->grp);
-    }
-    else
-    {
-        hook->task_final(t->grp, true);
-    }
-}
-
-bool client::is_grp_final(task_group *grp, bool &is_ok)
-{
-    for ( auto t : grp->tasks )
-    {
-        if ( t->state != task_stat_complete )
-        {
-            return false;
-        }
-        if ( t->retry_num > 0 )
-        {
-            is_ok = false;
-        }
-    }
-    return true;
+    return t->grp->is_final();
 }

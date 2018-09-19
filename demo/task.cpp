@@ -2,6 +2,7 @@
 // Created by root on 18-9-13.
 //
 #include <iostream>
+#include <sysqos_common.h>
 #include "client.h"
 #include "server.h"
 #include "task.h"
@@ -13,7 +14,11 @@ task::task(client *_cli, server *_srv, int _task_id, unsigned long _cost,
 {
     struct timespec tp;
     clock_gettime(CLOCK_REALTIME, &tp);
-//    standing_time_point =
+//    cout << RED<<"init task ("<<RESET << task_id << ")" << cli->name() << " -> " << srv->name()
+//            << ":"
+//            << string_bytaskstat(state)
+//            << "| retry_num " << retry_num
+//            << endl;
 }
 
 string task::string_bytaskstat(task_stat stat) const
@@ -48,11 +53,11 @@ json_obj task::to_json_obj() const
 
 void task::set_stat(task_stat new_stat)
 {
-    cout << "task (" << task_id << ")" << cli->name() << " -> " << srv->name()
-            << ":"
-            << string_bytaskstat(state) << "->" << string_bytaskstat(new_stat)
-            << "| retry_num " << retry_num << "| grp_retry" << grp->retry_num
-            << endl;
+//    cout << "task (" << task_id << ")" << cli->name() << " -> " << srv->name()
+//            << ":"
+//            << string_bytaskstat(state) << "->" << string_bytaskstat(new_stat)
+//            << "| retry_num " << retry_num << "| grp_retry" << grp->retry_num
+//            << endl;
     state = new_stat;
     
     switch ( new_stat )
@@ -80,5 +85,5 @@ void task::set_stat(task_stat new_stat)
 
 long task::usecs()
 {
-    return stat_complete_point.usec_elapsed_since(out_standing_point);
+    return stat_complete_point.usec_elapsed_since(wait_token_point);
 }

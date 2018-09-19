@@ -31,14 +31,15 @@ void server_group::run()
                 }
             }
         }
-        if ( min_time_usecs > 0 )
-        {
-            usleep((__useconds_t) min_time_usecs);
-        }
-        else
-        {
-            usleep(100);
-        }
+        usleep(1);
+//        if ( min_time_usecs > 0 )
+//        {
+//            usleep((__useconds_t) min_time_usecs);
+//        }
+//        else
+//        {
+//            usleep(1);
+//        }
 //
 //        if ( min_time_usecs > 0 )
 //        {

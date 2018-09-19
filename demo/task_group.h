@@ -25,10 +25,15 @@ public:
     int                 task_id;
     task_group_stat     state;
     client              *cli;
-    int                 retry_num;
     utime               begin_time;
+    std::mutex          m;
+    int                 final_cnt;
     
     long usecs();
+    
+    bool is_failed();
+    
+    bool is_final();
     
     void set_stat(task_group_stat new_stat);
     

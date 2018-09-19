@@ -20,7 +20,7 @@ class client_group : public complete_task_hook
 public:
     void task_completed(void);
     
-    void task_final(task_group *tgrp, bool is_fail);
+    void task_final(task_group *tgrp);
 
 private:
     std::mutex          m;

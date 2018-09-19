@@ -11,9 +11,6 @@
 class myevent_hander : public sysqos_demo_cmds::event_handler
 {
     demo_obj *demo;
-private:
-    void add_task(const json_obj &obj);
-
 public:
     int tasks(json_obj &tasks_info) override;
 

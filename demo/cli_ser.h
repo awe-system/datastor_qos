@@ -20,6 +20,7 @@ class cli_ser
     server *srv;
     std::mutex m;
     std::map<int,task *> tasks;
+    int fail_num;
     long task_num;
     double ave_task_usec;
 private:

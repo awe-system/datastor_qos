@@ -65,13 +65,13 @@ void client_group::task_completed(void)
     cond.notify_all();
 }
 
-void client_group::task_final(task_group *tgrp, bool is_fail)
+void client_group::task_final(task_group *tgrp)
 {
     for(auto t : tgrp->tasks)
     {
         t->set_stat(task_stat_complete);
     }
-    hook->task_final(tgrp,is_fail);
+    hook->task_final(tgrp);
 }
 
 void client_group::set_hook(complete_task_hook *_hook)

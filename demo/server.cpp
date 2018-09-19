@@ -10,17 +10,17 @@ void server::submit_task(task *t)
     if (!could_rcv(t) )
     {
         ++t->retry_num;
+        t->set_stat(task_stat_net_rcv);
         lck.unlock();
         complete_task(t);
     }
     else
     {
         t->set_stat(task_stat_wait_disk);
-        pending_task.push_back(t);
-        t->retry_num = 0;
         rs += t->cost;
+        pending_task.push_back(t);
         lck.unlock();
-        hook->tasks_submited();
+//        hook->tasks_submited();
     }
 }
 
@@ -32,15 +32,15 @@ bool server::run_once(long &usecs_guess_wake_up)
         return false;
     task * t = pending_task.front();
     utime cur_time;
-    long usec_eslape = cur_time.usec_elapsed_since(t->wait_disk_point);
-    if(usec_eslape < usecs_perio)
-    {
-        usecs_guess_wake_up = usecs_perio - usec_eslape;
-        return false;
-    }
-    
+//    long usec_eslape = cur_time.usec_elapsed_since(t->wait_disk_point);
+//    if(usec_eslape < usecs_perio)
+//    {
+//        usecs_guess_wake_up = usecs_perio - usec_eslape;
+//        return false;
+//    }
     pending_task.pop_front();
     rs -= t->cost;
+    t->set_stat(task_stat_net_rcv);
     lck.unlock();
     complete_task(t);
     return true;
@@ -74,7 +74,6 @@ server::server(const string &_name, bool qos_open, int max_resource_num,
 
 void server::complete_task(task *t)
 {
-    t->set_stat(task_stat_net_rcv);
     t->cli->complete_task(t);
 }
 

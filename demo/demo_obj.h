@@ -46,11 +46,13 @@ public:
     
     void run();
     
-    void addtasks(const int task_num, const int cost,
+    void addtasks(const json_obj &obj);
+    
+    void addtask(const int task_num, const int cost,
                  const json_obj& c_s_pairs);
     demo_obj( client_group * clis,server_group * servs);
     
-    void task_final(task_group *tgrp, bool is_fail);
+    void task_final(task_group *tgrp);
 };
 
 

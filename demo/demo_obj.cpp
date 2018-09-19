@@ -10,12 +10,11 @@ void demo_obj::run()
 {
     while ( !is_stop )
     {
-
+        usleep(1);
         unique_lock<std::mutex> lck(run_lck);
-        cond.wait(lck);
+//        cond.wait(lck);
         while ( !to_del_list.empty() || !to_snd_task_list.empty() )
         {
-            
             task_group *t_grp = NULL;
             if ( !to_del_list.empty() )
             {
@@ -45,23 +44,22 @@ void demo_obj::run()
             }
             lck.lock();
         }
-        
     }
 }
 
-void demo_obj::task_final(task_group *tgrp, bool is_fail)
+void demo_obj::task_final(task_group *tgrp)
 {
     unique_lock<std::mutex> lck(run_lck);
     to_del_list.push_back(tgrp);
     cond.notify_one();
 }
 
-void demo_obj::addtasks(const int task_num, const int cost,
+void demo_obj::addtask(const int task_num, const int cost,
                         const json_obj &c_s_pairs)
 {
    
     map<server *, client *> cs_map;
-    unique_lock<std::mutex> lck(run_lck);
+ 
     for ( int i = 0; i < task_num; ++i )
     {
        
@@ -71,13 +69,10 @@ void demo_obj::addtasks(const int task_num, const int cost,
             server *srv = servers->server_byname(jpair.first.s_val);
             cs_map.insert(make_pair(srv, cli));
         }
-        lck.unlock();
-        
         task_group              *tgrp;
         tgrp = new task_group(cost, cs_map,
                               __sync_fetch_and_add(&cur_task_id, 1));
-    
-        lck.lock();
+        
         for ( auto              t :tgrp->tasks )
         {
             auto it = cli_sers.find(t->cli->name() + t->srv->name());
@@ -85,9 +80,6 @@ void demo_obj::addtasks(const int task_num, const int cost,
         }
         to_snd_task_list.push_back(tgrp);
     }
-    cond.notify_one();
-    lck.unlock();
-   
 }
 
 json_obj demo_obj::to_json_obj()
@@ -146,7 +138,6 @@ json_obj demo_obj::json_by_cs()
 
 void demo_obj::update_demo_analysis(task_group *grp)
 {
-    //FIXME : 增加统计 统计信息的汇总
     for (auto t : grp->tasks)
     {
         client *cli = t->cli;
@@ -170,4 +161,29 @@ void demo_obj::try_increase_grp(task_group *grp)
 {
     grp->set_stat(task_group_stat_wait_token);
     clients->submit_tasks(grp);
+}
+
+void demo_obj::addtasks(const json_obj &obj)
+{
+    try
+    {
+        unique_lock<std::mutex> lck(run_lck);
+        long num = obj["num"].get_number();
+        json_obj obj_array = obj["taskinfo"];
+        for(long i = 0;i<num;++i)
+        {
+            for(const json_obj &task_obj : obj_array.array_val)
+            {
+                addtask((const int) task_obj["task_num"].get_number(),
+                         (const int) task_obj["task_cost"].get_number(),
+                         task_obj["c_s_pairs"]);
+            }
+        }
+        
+        return;
+    }
+    catch (...)
+    {
+        return;
+    }
 }
