@@ -25,8 +25,8 @@ void client_group::run()
 void client_group::submit_tasks(task_group *task_grp)
 {
     task_grp->cli->submit_tasks(task_grp);
-    std::unique_lock<std::mutex> lck(m);
-    cond.notify_all();
+//    std::unique_lock<std::mutex> lck(m);
+//    cond.notify_all();
 }
 
 json_obj client_group::to_json_obj() const

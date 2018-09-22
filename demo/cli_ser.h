@@ -24,6 +24,7 @@ class cli_ser
     long task_num;
     double ave_task_usec;
 private:
+    json_obj quotas();
     json_obj history();
     json_obj analysis_tasks();
 public:

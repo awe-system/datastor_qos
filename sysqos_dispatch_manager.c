@@ -5,7 +5,9 @@
 #include <pthread.h>
 #include <assert.h>
 #include <memory.h>
+#include <stdio.h>
 #include "sysqos_dispatch_manager.h"
+#include "sysqos_msg.h"
 //#include "sysqos_app_node.h"
 //#include "sysqos_token_update.h"
 
@@ -24,7 +26,6 @@ static unsigned long global_try_alloc(void *pri, unsigned long cost)
 static void try_clear_wait_increase(struct sysqos_disp_manager *manager)
 {
     app_node_t *node = NULL;
-    pthread_rwlock_rdlock(&manager->lck);
     
     while ( manager->lhead_wait_increase
             .is_first_exist(&manager->lhead_wait_increase, &node) )
@@ -35,7 +36,6 @@ static void try_clear_wait_increase(struct sysqos_disp_manager *manager)
         if ( !is_continue )
         { break; }
     }
-    pthread_rwlock_unlock(&manager->lck);
 }
 
 static void add_rs_to_upctx(void *ctx, void *id, void *pri)
@@ -65,12 +65,11 @@ static void update_nodes_token_quota_new(fence_executor_t *executor, void *ctx)
     assert(executor && ctx);
     
     manager = container_of(executor, sysqos_disp_manager_t, executor);
-    
     pthread_rwlock_rdlock(&manager->lck);
     manager->tab->for_each_do(manager->tab, pctx, add_rs_to_upctx);
     pctx->update(pctx,manager,set_quota_new);
     pthread_rwlock_unlock(&manager->lck);
-    
+   
 }
 
 static bool update_policy(struct sysqos_disp_manager *manager, bool is_direct)
@@ -84,9 +83,16 @@ static bool update_policy(struct sysqos_disp_manager *manager, bool is_direct)
         return false;
     }
     
-    manager->executor.execute(&manager->executor, &manager->update_ctx);
     
+//    printf(RED"before execute\n"RESET);
+    manager->executor.execute(&manager->executor, &manager->update_ctx);
+//    printf(BLUE"before pthread_rwlock_wrlock\n"RESET);
+    pthread_rwlock_wrlock(&manager->lck);
+//    printf(GREEN"before try_clear_wait_increase\n"RESET);
     try_clear_wait_increase(manager);
+//    printf(BLUE"after try_clear_wait_increase\n"RESET);
+    pthread_rwlock_unlock(&manager->lck);
+//    printf(RED"after pthread_rwlock_unlock\n"RESET);
     return true;
 }
 
@@ -147,7 +153,7 @@ unlock_end:
 static void resource_increase(struct sysqos_disp_manager *manager,
                               unsigned long cost)
 {
-    pthread_rwlock_rdlock(&manager->lck);
+    pthread_rwlock_wrlock(&manager->lck);
     manager->tokens.increase(&manager->tokens, cost);
     pthread_rwlock_unlock(&manager->lck);
     update_policy(manager, true);
@@ -247,6 +253,7 @@ static void node_online(struct msg_event_ops *ops, void *id)
     
     update_policy(manager, true);
     
+    
     return;
 //    manager->tab->erase(manager->tab, id, (void **) &node);
 insert_node_failed:
@@ -311,7 +318,7 @@ static int node_rcvd(sysqos_disp_manager_t *manager, void *id,
     void       *node_val;
     int        err;
     app_node_t *node = NULL;
-    pthread_rwlock_rdlock(&manager->lck);
+    
     do
     {
         err = manager->tab->find(manager->tab, id, &node_val);
@@ -325,7 +332,6 @@ static int node_rcvd(sysqos_disp_manager_t *manager, void *id,
         *is_reset = node->rcvd(node, pa2d, pnew_free_size);
         
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
     return err;
 }
 
@@ -343,25 +349,32 @@ static void rcvd(struct msg_event_ops *ops, void *id,
     assert(ops && len == sizeof(app2dispatch_t) && buf);
     memcpy(&a2d,buf,sizeof(app2dispatch_t));
     check_online(manager, id);
-    
+    pthread_rwlock_rdlock(&manager->lck);
     err = node_rcvd(manager, id, &a2d, &new_free_size, &is_reset);
     if ( err )
-    { return; }
+    {
+        pthread_rwlock_unlock(&manager->lck);
+        return;
+    }
     
     /*if ( is_reset )
     {
         manager->msg_event.node_reset(&manager->msg_event, id);
+        pthread_rwlock_unlock(&manager->lck);
         update_policy(manager, true);
     }
     else*/if ( new_free_size )
     {
         manager->tokens.free(&manager->tokens, new_free_size);
         try_clear_wait_increase(manager);
+        pthread_rwlock_unlock(&manager->lck);
     }
     else
     {
+        pthread_rwlock_unlock(&manager->lck);
         update_policy(manager, false);
     }
+    
 }
 
 static long snd_msg_len(struct msg_event_ops *ops, void *id)

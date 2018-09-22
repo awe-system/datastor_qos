@@ -5,6 +5,7 @@
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
+#include <stdio.h>
 #include "sysqos_dispatch_base_node.h"
 
 static inline bool is_to_reset(dispatch_base_node_t *desc, long new_ver)
@@ -152,6 +153,8 @@ static int try_alloc_from_desc(dispatch_base_node_t *desc, long cost)
     {
         update_quota_target_force(desc);
         desc->token_inuse += cost;
+//        printf(BLUE"try_alloc_from_desc cost = %li token_inuse = %lu\n", cost,
+//               desc->token_inuse);
     }
     pthread_rwlock_unlock(&desc->lck);
     return QOS_ERROR_OK;
@@ -162,7 +165,10 @@ static bool free_to_base(dispatch_base_node_t *desc, long cost)
 {
     bool could_alloc = false;
     pthread_rwlock_wrlock(&desc->lck);
+    assert(desc->token_inuse >= cost);
     desc->token_inuse -= cost;
+//    printf(RED"free_to_base cost = %li token_inuse = %lu\n", cost,
+//           desc->token_inuse);
     
     update_quota_target(desc);
     if ( desc->token_quota_target + desc->respond_step < desc->token_quota

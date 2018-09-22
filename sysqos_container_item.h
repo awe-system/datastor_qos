@@ -5,6 +5,8 @@
 #ifndef QOS_QOS_CONTAINER_ITEM_H
 #define QOS_QOS_CONTAINER_ITEM_H
 
+#include <assert.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

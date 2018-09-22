@@ -8,6 +8,28 @@
 #include "demo_obj.h"
 #include "myevent_hander.h"
 
+
+int demo_hash(void *id, int talbe_len)
+{
+    int res = 0;
+    const char *str = (const char *) id;
+    if(!str)return 0;
+    for(int i =0; i<strlen(str);++i)
+    {
+        res += str[i];
+    }
+    return abs(res%talbe_len);
+}
+
+int demo_compare(void *id_a, void *id_b)
+{
+    if(id_a == NULL || id_b == NULL) return 0;
+    const char *a = (const char *) id_a;
+    const char *b = (const char *) id_b;
+    return strcmp(a,b);
+}
+
+
 static void *client_group_func(void *pgroup)
 {
     client_group *group = (client_group *) pgroup;
@@ -38,11 +60,10 @@ env demo_client_num("demo", "demo_client_num");
 env demo_server_num("demo", "demo_server_num");
 env demo_max_rs_inserver("demo", "demo_max_rs_inserver");
 env demo_task_retry("demo", "demo_task_retry");
+env is_qos_open("demo", "is_qos_open");
 
 #define USECS_PER_IO         1
 #define TASK_GRP_RETRY_NUM   3
-static bool is_qos_open = false;
-
 
 class timer_cb : public Timercallback
 {
@@ -57,9 +78,10 @@ int main(int argc, char *argv[])
 {
     client_group
                  cli_grp
-            (demo_client_num.get_int(), is_qos_open, TASK_GRP_RETRY_NUM,
+            (demo_client_num.get_int(), (bool) is_qos_open.get_int(), TASK_GRP_RETRY_NUM,
              demo_task_retry.get_int());
-    server_group srv_grp(demo_server_num.get_int(), is_qos_open,
+    server_group srv_grp(demo_server_num.get_int(),
+                         (bool) is_qos_open.get_int(),
                          demo_max_rs_inserver.get_int(),
                          USECS_PER_IO);
     

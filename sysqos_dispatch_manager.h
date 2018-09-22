@@ -12,6 +12,8 @@
 #include "count_controller.h"
 #include "fence_executor.h"
 #include "sysqos_token_update.h"
+#include "sysqos_msg.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

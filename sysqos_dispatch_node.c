@@ -11,9 +11,9 @@ static struct list_head *
 permission_list_if_final_by_rs_list(struct list_head *list)
 {
     token_reqgrp_t *permission = permission_by_token_list(list);
-    token_req_t     *rip        =
-                            app_token_by_list(list);
-    int             err         = permission->to_got(permission, rip);
+    token_req_t    *rip        =
+                           app_token_by_list(list);
+    int            err         = permission->to_got(permission, rip);
     if ( err == QOS_ERROR_FAILEDNODE || err == QOS_ERROR_OK )
     {
         return &permission->lhead_reqgrep_got;
@@ -24,11 +24,11 @@ permission_list_if_final_by_rs_list(struct list_head *list)
 static void resource_increased(dispatch_node_t *item,
                                struct list_head *got_permission_list)
 {
-    int               err;
-    struct list_head  *permission_list = NULL;
-    nodereq_list_t *tokens          = &item->lhead_nodereq;
-    dispatch_base_node_t  *desc            = &item->base_node;
-    resource_list_t   *rs              = NULL;
+    int                  err;
+    struct list_head     *permission_list = NULL;
+    nodereq_list_t       *tokens          = &item->lhead_nodereq;
+    dispatch_base_node_t *desc            = &item->base_node;
+    resource_list_t      *rs              = NULL;
     assert(item && got_permission_list);
     
     rs = tokens->front(tokens);
@@ -37,7 +37,6 @@ static void resource_increased(dispatch_node_t *item,
         return;
     }
     
-    sysqos_spin_lock(&item->lck);
     while ( NULL != (rs = tokens->front(tokens)) )
     {
         err = desc->try_alloc_from_base(desc, rs->rs.cost);
@@ -52,7 +51,6 @@ static void resource_increased(dispatch_node_t *item,
             list_add(permission_list, got_permission_list);
         }
     }
-    sysqos_spin_unlock(&item->lck);
 }
 
 static bool resource_changed(dispatch_node_t *item,
@@ -60,14 +58,17 @@ static bool resource_changed(dispatch_node_t *item,
                              struct list_head *got_permission_list)
 {
     bool is_reset = false;
+    bool is_increased;
     assert(item && dta && got_permission_list);
-    bool is_increased = item->base_node
-            .check_update_quota_version(&item->base_node, dta->token_quota, dta->version,
+    is_increased = item->base_node
+            .check_update_quota_version(&item->base_node, dta->token_quota,
+                                        dta->version,
                                         &is_reset);
     if ( is_increased )
     {
         resource_increased(item, got_permission_list);
     }
+    sysqos_spin_unlock(&item->lck);
     return is_reset;
 }
 
@@ -85,14 +86,20 @@ free_resource(struct dispatch_node *item, resource_list_t *rs,
             *rip = app_token_by_list(&rs->list);
     assert(item && rs && got_permission_list);
     //NOTE:删除之前的资源数和当前版本的资源数无关
+    sysqos_spin_lock(&item->lck);
     if ( rip->Nodeid == item->fence_id )
     {
-        bool is_increase = item->base_node.free_to_base(&item->base_node, rs->rs.cost);
-        if(is_increase)
+        
+        bool is_increase = item->base_node
+                .free_to_base(&item->base_node, rs->rs.cost);
+        if ( is_increase )
         {
             resource_increased(item, got_permission_list);
         }
+        
     }
+    sysqos_spin_unlock(&item->lck);
+    
 }
 
 //失败则放入队列
@@ -108,7 +115,8 @@ alloc_resource(struct dispatch_node *item, resource_list_t *rs)
     if ( err )
     {
         sysqos_spin_lock(&item->lck);
-        err = item->base_node.try_alloc_from_base(&item->base_node, rs->rs.cost);
+        err = item->base_node
+                .try_alloc_from_base(&item->base_node, rs->rs.cost);
         if ( err )
         {
             item->lhead_nodereq.push_back(&item->lhead_nodereq, rs);
@@ -116,7 +124,7 @@ alloc_resource(struct dispatch_node *item, resource_list_t *rs)
         else
         {
             token_reqgrp_t *permission = rip->token_grp;
-            err                         = permission->to_got(permission, rip);
+            err                        = permission->to_got(permission, rip);
         }
         sysqos_spin_unlock(&item->lck);
     }
@@ -133,8 +141,8 @@ alloc_resource(struct dispatch_node *item, resource_list_t *rs)
 static void get_protocol(struct dispatch_node *item,
                          app2dispatch_t *atd)
 {
-    atd->press   = item->lhead_nodereq.get_press(&item->lhead_nodereq);
-    atd->version     = item->base_node.get_version(&item->base_node);
+    atd->press        = item->lhead_nodereq.get_press(&item->lhead_nodereq);
+    atd->version      = item->base_node.get_version(&item->base_node);
     atd->token_in_use = item->base_node.get_token_inuse(&item->base_node);
 }
 
@@ -150,9 +158,9 @@ static void pop_all(struct dispatch_node *item,
     list_for_each_safe(pos, tmp, &fail_token_list)
     {
         token_reqgrp_t *permission = permission_by_token_list(pos);
-        token_req_t     *rip        =
-                                app_token_by_list(
-                                        pos);
+        token_req_t    *rip        =
+                               app_token_by_list(
+                                       pos);
         
         int err = permission->to_failed(permission, rip);
         if ( err == QOS_ERROR_FAILEDNODE )

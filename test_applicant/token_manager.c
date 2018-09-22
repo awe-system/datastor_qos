@@ -91,7 +91,7 @@ static void test_token_grp_got(void *token_grp, void *pri, int err)
     test_enqueue(test, token_grp);
 }
 
-static applicant_event_ops_t test_app_event =
+static sysqos_applicant_event_ops_t test_app_event =
                                      {
                                              .token_grp_got = test_token_grp_got,
                                      };

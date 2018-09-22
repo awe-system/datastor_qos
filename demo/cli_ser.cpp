@@ -2,6 +2,7 @@
 // Created by root on 18-9-14.
 //
 
+#include <sysqos_dump_interface.h>
 #include "cli_ser.h"
 #include "task.h"
 #include "client.h"
@@ -13,6 +14,11 @@ json_obj cli_ser::to_json_obj()
     obj.merge(json_obj("server", srv->name()));
     obj.merge(analysis_tasks());
     obj.merge(history());
+    obj.merge(quotas());
+    obj.merge(
+            json_obj("disk_usage", to_string(srv->last_percent) + string("%")));
+    obj.merge(json_obj("net_usage",
+                       to_string(srv->net_last_percent) + string("%")));
     return obj;
 }
 
@@ -40,6 +46,7 @@ json_obj cli_ser::analysis_tasks()
     obj.set_dic();
     int                retry         = 0;
     int                wait_token    = 0;
+    int                wait_grp      = 0;
     int                out_standing  = 0;
     int                net_send      = 0;
     int                wait_disk     = 0;
@@ -79,17 +86,23 @@ json_obj cli_ser::analysis_tasks()
                 case task_stat_complete:
                     ++complete;
                     break;
+                case task_stat_wait_grp:
+                    ++wait_grp;
+                    break;
             }
         }
     }
     lck.unlock();
-    total_pending = wait_token + out_standing + net_send + wait_disk + net_rcv
-                    + complete;
+    total_pending =
+            wait_token + out_standing + wait_grp + net_send + wait_disk +
+            net_rcv
+            + complete;
     obj.merge(json_obj("retry", retry));
     obj.merge(json_obj("wait_token", wait_token));
     obj.merge(json_obj("out_standing", out_standing));
     obj.merge(json_obj("net_send", net_send));
     obj.merge(json_obj("wait_disk", wait_disk));
+    obj.merge(json_obj("wait_grp", wait_grp));
     obj.merge(json_obj("net_rcv", net_rcv));
     obj.merge(json_obj("complete", complete));
     obj.merge(json_obj("total_pending", total_pending));
@@ -101,19 +114,22 @@ json_obj cli_ser::analysis_tasks()
 
 string time_unit_transfer(long t)
 {
-    if(t < 1000) return to_string(t)+string("us");
-    t/=1000;
-    if(t<1000) return to_string(t)+string("ms");
-    t/=1000;
-    if(t<60) return to_string(t)+string("s");
-    t/=60;
-    return to_string(t)+string("min");
+    if ( t < 1000 )
+    { return to_string(t) + string("us"); }
+    t /= 1000;
+    if ( t < 1000 )
+    { return to_string(t) + string("ms"); }
+    t /= 1000;
+    if ( t < 60 )
+    { return to_string(t) + string("s"); }
+    t /= 60;
+    return to_string(t) + string("min");
 }
 
 json_obj cli_ser::history()
 {
     unique_lock<mutex> lck(m);
-    string             t_usec = time_unit_transfer((long)ave_task_usec);
+    string             t_usec = time_unit_transfer((long) ave_task_usec);
     long               t_n    = task_num;
     lck.unlock();
     json_obj obj("t_usec", t_usec);
@@ -133,4 +149,34 @@ void cli_ser::update(task *t)
         ++fail_num;
     }
     
+}
+
+json_obj cli_ser::quotas()
+{
+    sysqos_disp_dump_info_t disp_info;
+    sysqos_app_dump_info_t  app_info;
+    sysqos_dump_app(&cli->ops, (void *) srv->name().c_str(), &app_info);
+    sysqos_dump_disp(&srv->ops, (void *) cli->name().c_str(), &disp_info);
+    json_obj obj("token_inuse", (long long) app_info.token_inuse);
+    obj.merge(json_obj("app_version", (long long) app_info.version));
+    obj.merge(json_obj("disp_version", (long long) disp_info.version));
+    obj.merge(json_obj("app_quota", (long long) app_info.token_quota));
+    obj.merge(json_obj("app_quotanew", (long long) app_info.token_quota_new));
+    obj.merge(json_obj("app_target", (long long) app_info.token_quota_target));
+    obj.merge(json_obj("respond_step", (long long) app_info.respond_step));
+    obj.merge(json_obj("disp_quota", (long long) disp_info.token_quota));
+    obj.merge(json_obj("press", (long long) disp_info.press));
+    obj.merge(json_obj("disp_quotanew", (long long) disp_info.token_quota_new));
+    obj.merge(json_obj("min", (long long) disp_info.min));
+    obj.merge(json_obj("dynamic", (long long) disp_info.token_dynamic));
+    obj.merge(json_obj("static", (long long) disp_info.token_used_static));
+    obj.merge(json_obj("percent",
+                       to_string((disp_info.token_quota) * 100 /
+                                 (disp_info.token_used_static +
+                                  disp_info.token_dynamic)) + string("%")));
+    obj.merge(json_obj("dynamic_percent",
+                       to_string((disp_info.token_quota -
+                                  disp_info.min) * 100 /
+                                 disp_info.token_dynamic) + string("%")));
+    return obj;
 }

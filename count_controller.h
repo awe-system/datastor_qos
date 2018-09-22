@@ -6,12 +6,15 @@
 #define _QOS_COUNT_CONTROLLER_H
 
 #include <stdbool.h>
+#include "sysqos_type.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 typedef struct count_controller
 {
     /**private:**/
+    sysqos_spin_lock_t lck;
     int cnt;
     int max;
     /**public:**/

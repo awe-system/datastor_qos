@@ -4,6 +4,7 @@
 #include "sysqos_dispatch_base_node.h"
 #include "hash_table.h"
 #include "sysqos_policy_param.h"
+#include "sysqos_resource.h"
 
 #ifndef QOS_TOKEN_MANAGER_H
 #define QOS_TOKEN_MANAGER_H

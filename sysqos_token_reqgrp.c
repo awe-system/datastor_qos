@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include "sysqos_token_reqgrp.h"
 #include "sysqos_common.h"
+#include "sysqos_resource.h"
 
 static void free_token(token_req_t *resource,
                        memory_cache_t *resource_cache)

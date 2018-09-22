@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include "sysqos_interface.h"
 #include "memory_cache.h"
+#include "sysqos_resource.h"
 
 #ifdef __cplusplus
 extern "C" {

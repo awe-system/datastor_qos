@@ -49,8 +49,8 @@ static unsigned long update_node_quota(struct list_head *pos,
     unsigned long new_real_quota = 0;
     update_node_t *updatenode    = update_node_by_list(pos);
     app_node_t    *node          = app_node_by_update(updatenode);
-  
-    if(total_weight > 0)
+    
+    if ( total_weight > 0 )
     {
         updatenode->tmp_token_quota =
                 token_total * updatenode->weight / total_weight
@@ -71,9 +71,9 @@ static unsigned long update_node_quota_left(struct list_head *pos,
                                             set_quota_new_func set_quota_new)
 {
     unsigned long new_real_quota = 0;
-    update_node_t *updatenode = update_node_by_list(pos);
-    app_node_t    *node       = app_node_by_update(updatenode);
-    unsigned long old_quota   = updatenode->tmp_token_quota;
+    update_node_t *updatenode    = update_node_by_list(pos);
+    app_node_t    *node          = app_node_by_update(updatenode);
+    unsigned long old_quota      = updatenode->tmp_token_quota;
     
     updatenode->tmp_token_quota += token_left;
     
@@ -98,8 +98,11 @@ static void update(struct token_update_ctx *ctx,
     unsigned long    token_left   = 0;
     unsigned long    token_total  = 0;
     unsigned long    total_weight = 0;
-    if(ctx->total_weight == 0)
+    unsigned long    this_token   = 0;
+    if ( ctx->total_weight == 0 )
+    {
         return;
+    }
     ctx->token_total += manager->tokens.token_free;
     token_total = token_left = update_token_left_base(ctx);
     
@@ -107,19 +110,26 @@ static void update(struct token_update_ctx *ctx,
     
     list_for_each(pos, &ctx->lhead_update_node)
     {
-        token_left -= update_node_quota(pos, token_total, total_weight, manager,
-                                        func);
-        if ( token_left <= 0 )
-        { break; }
+        this_token = update_node_quota(pos, token_total, total_weight, manager,
+                                       func);
+//        assert(token_left >= this_token);
+        if ( token_left <= this_token)
+        {
+            goto end;
+        }
+        token_left -= this_token;
     }
     
     list_for_each(pos, &ctx->lhead_update_node)
     {
-        token_left -= update_node_quota_left(pos, token_left, manager, func);
-        if ( token_left <= 0 )
-        { break; }
+        this_token = update_node_quota_left(pos, token_left, manager, func);
+        if ( token_left <= this_token )
+        {
+            goto end;
+        }
+        token_left -= this_token;
     }
-    
+end:
     clear(ctx);
 }
 

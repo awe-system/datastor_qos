@@ -18,6 +18,7 @@ enum task_stat
     task_stat_out_standing,
     task_stat_wait_token,
     task_stat_net_send,
+    task_stat_wait_grp,
     task_stat_wait_disk,
     task_stat_net_rcv,
     task_stat_complete
@@ -27,18 +28,19 @@ class task_group;
 
 class task
 {
+    mutex m;
 public:
     utime out_standing_point;
     utime wait_token_point;
     utime net_send_point;
     utime net_rcv_point;
+    utime wait_grp_point;
     utime wait_disk_point;
     utime stat_complete_point;
     
     long usecs();
     
     void set_stat(task_stat new_stat);
-    
     unsigned long cost;
     client        *cli;
     server        *srv;
@@ -53,6 +55,10 @@ public:
     
     task(client *_cli, server *_srv, int task_id, unsigned long cost,
          task_group *grp);
+    
+    
+    bool is_final();
+    bool is_wait_grp();
 };
 
 

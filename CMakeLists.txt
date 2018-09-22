@@ -10,7 +10,7 @@ set(CunitSource
 
 set(SOURCE_FILES
         list_head.h
-        sysqos_interface.h
+        sysqos_interface.h  sysqos_interface.c
         sysqos_token_reqgrp_manager.c
         sysqos_token_reqgrp_manager.h
         hash_table.c hash_table.h
@@ -26,7 +26,8 @@ set(SOURCE_FILES
         sysqos_token_update.c sysqos_token_update.h sysqos_update_node.c
         sysqos_update_node.h
         sysqos_waitincrease_list.c sysqos_waitincrease_list.h count_controller.c
-        count_controller.h fence_executor.c fence_executor.h sysqos_type.h)
+        count_controller.h fence_executor.c fence_executor.h sysqos_type.h
+        sysqos_dump_interface.c sysqos_dump_interface.h)
 
 include_directories("test_lib")
 include_directories(".")
@@ -36,7 +37,7 @@ include_directories("/usr/local/include/lt_data")
 add_library(libtest test_lib/sysqos_test_lib.c test_lib/sysqos_test_lib.h test_lib/test_frame.c test_lib/test_frame.h sysqos_type.h)
 target_link_libraries(libtest pthread)
 
-add_library(libqos ${SOURCE_FILES} sysqos_type.h)
+add_library(libqos ${SOURCE_FILES} sysqos_type.h sysqos_msg.h sysqos_resource.h)
 target_link_libraries(libqos pthread libtest)
 
 add_compile_options("-fprofile-arcs")
@@ -61,5 +62,5 @@ target_link_libraries(test_app2disp pthread  libtest gcov)
 
 
 add_executable(demo ${SOURCE_FILES} ${CunitSource} demo/sysqos_demo_cmds.h demo/sysqos_demo_cmds.cpp
-        demo/demo.cpp demo/demo.h test_lib/sysqos_test_lib.c test_lib/sysqos_test_lib.h demo/client.cpp demo/client.h demo/server.cpp demo/server.h demo/client_group.cpp demo/client_group.h demo/server_group.cpp demo/server_group.h demo/demo_obj.cpp demo/demo_obj.h demo/myevent_hander.cpp demo/myevent_hander.h demo/task.cpp demo/task.h demo/task_group.cpp demo/task_group.h demo/cli_ser.cpp demo/cli_ser.h demo/circle_increse_safe.cpp demo/circle_increse_safe.h demo/utime.cpp demo/utime.h demo/Timer.cpp demo/Timer.h)
+        demo/demo.cpp demo/demo.h test_lib/sysqos_test_lib.c test_lib/sysqos_test_lib.h demo/client.cpp demo/client.h demo/server.cpp demo/server.h demo/client_group.cpp demo/client_group.h demo/server_group.cpp demo/server_group.h demo/demo_obj.cpp demo/demo_obj.h demo/myevent_hander.cpp demo/myevent_hander.h demo/task.cpp demo/task.h demo/task_group.cpp demo/task_group.h demo/cli_ser.cpp demo/cli_ser.h demo/circle_increse_safe.cpp demo/circle_increse_safe.h demo/utime.cpp demo/utime.h demo/Timer.cpp demo/Timer.h sysqos_msg.h)
 target_link_libraries(demo pthread  libtest  gcov boost_system boost_thread datastor_utils)

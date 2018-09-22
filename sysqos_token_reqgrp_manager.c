@@ -8,6 +8,7 @@
 #include <string.h>
 #include "sysqos_token_reqgrp_manager.h"
 #include "sysqos_dispatch_node.h"
+#include "sysqos_alloc.h"
 
 /*******************************************************************************************************************/
 //static inline void check_snd_msg(token_reqgrp_manager_t *manager,
@@ -244,7 +245,7 @@ static void rcvd(struct msg_event_ops *ops,
     memcpy(&dta, buf, (size_t) len);
     do
     {
-        pthread_rwlock_rdlock(&manager->lck);
+        pthread_rwlock_wrlock(&manager->lck);
         do
         {
             err = manager->app_node_table
@@ -293,6 +294,8 @@ static void check_node_in_when_get(struct token_reqgrp_manager *manager,
     }
 }
 
+
+
 static int get_token_grp(struct token_reqgrp_manager *manager,
                          resource_list_t *rs,
                          void *pri,
@@ -309,8 +312,12 @@ static int get_token_grp(struct token_reqgrp_manager *manager,
     LISTHEAD_INIT(&relative_token_grp);
     
     list_add(&head, &rs->list);
+#ifdef GRP_MEMORY_CACHE
     *pp_token_grp = (token_reqgrp_t *) manager->token_grp_cache
             .alloc(&manager->token_grp_cache);
+#else
+    *pp_token_grp = (token_reqgrp_t *)qos_alloc(sizeof(token_reqgrp_t));
+#endif
     if ( !*pp_token_grp )
         end_func(err, QOS_ERROR_MEMORY, token_grp_cache_alloc_failed);
     
@@ -322,7 +329,7 @@ static int get_token_grp(struct token_reqgrp_manager *manager,
     
     check_node_in_when_get(manager, &head);
     
-    pthread_rwlock_rdlock(&manager->lck);
+    pthread_rwlock_wrlock(&manager->lck);
     err = try_to_get_tokens(manager, *pp_token_grp);
     pthread_rwlock_unlock(&manager->lck);
     
@@ -337,7 +344,11 @@ static int get_token_grp(struct token_reqgrp_manager *manager,
     //try_alloc_permision_failed:
     //    token_reqgrp_exit(*pp_token_grp,&manager->resource_cache);
 permission_init_failed:
+#ifdef GRP_MEMORY_CACHE
     manager->token_grp_cache.free(&manager->token_grp_cache, *pp_token_grp);
+#else
+    qos_free(*pp_token_grp);
+#endif
 token_grp_cache_alloc_failed:
     list_del(&head);
     return err;
@@ -380,13 +391,21 @@ static void put_token_grp(struct token_reqgrp_manager *manager,
     }
     check_node_out_when_put(manager, &fail_head);
     
-    pthread_rwlock_rdlock(&manager->lck);
+    pthread_rwlock_wrlock(&manager->lck);
     try_to_put_tokens(manager, p_token_grp, &relative_token_grp_list);
     pthread_rwlock_unlock(&manager->lck);
-    end_token_grps(manager, &relative_token_grp_list);
     
     token_reqgrp_exit(p_token_grp, &manager->resource_cache);
+#ifdef GRP_MEMORY_CACHE
     manager->token_grp_cache.free(&manager->token_grp_cache, p_token_grp);
+#else
+    qos_free(p_token_grp);
+#endif
+    
+    
+    
+    end_token_grps(manager, &relative_token_grp_list);
+    
 }
 
 static long snd_msg_len(struct msg_event_ops *ops, void *id)
@@ -418,7 +437,7 @@ find_failed:
 }
 
 void set_app_event_ops(struct token_reqgrp_manager *manager,
-                       applicant_event_ops_t *ops)
+                       sysqos_applicant_event_ops_t *ops)
 {
     assert(manager && ops);
     manager->app_ops = ops;

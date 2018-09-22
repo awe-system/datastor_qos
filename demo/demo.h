@@ -8,6 +8,8 @@
 
 #include "sysqos_demo_cmds.h"
 
+int demo_compare(void *id_a, void *id_b);
 
+int  demo_hash(void *id, int talbe_len);
 
 #endif //TEST_QOS_DEMO_H

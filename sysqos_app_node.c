@@ -63,7 +63,11 @@ static bool update_token_quota(struct app_node *node, void *pri,
     unsigned long new_quota        = 0;
     assert(node  && try_alloc_func && erase_func);
     sysqos_spin_lock(&node->lck);
-    if ( node->token_quota < node->token_quota_new )
+    if(node->token_quota >= node->token_quota_new )
+    {
+        erase_func(pri, node);
+    }
+    else
     {//变小时在rcvd触发 这里只处理变大的情况
         new_quota = node->token_quota_new - node->token_quota;
         new_quota = try_alloc_func(pri, new_quota);
