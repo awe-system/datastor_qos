@@ -45,49 +45,9 @@ void server::submit_task(task *t)
 //                << endl;
 //    }
     unique_lock<mutex> lck(m);
-   
-    if ( t->grp->is_failed )
-    {
-        ++t->retry_num;
-        t->set_stat(task_stat_net_rcv);
-        lck.unlock();
-        complete_task(t);
-        return;
-    }
-    if ( !could_rcv(t) )
-    {
-        if ( is_qos_open )
-        {
-            abort();
-        }
-        ++t->retry_num;
-        t->set_stat(task_stat_net_rcv);
-        lck.unlock();
-        complete_task(t);
-        
-    }
-    else
-    {
-//        if ( t->cli->name() == string("c5") )
-//        {
-//            cout << RED << "submit_task (" << RESET << t->task_id << ")"
-//                    << t->cli->name() << " -> " << name()
-//                    << ": before set_stat(task_stat_wait_disk)"
-//                    << endl;
-//        }
-        rs += t->cost;
-        t->set_stat(task_stat_wait_grp);
-        waitgrp_task.push_back(t);
-//        if ( t->cli->name() == string("c5") )
-//        {
-//            cout << BLUE << "submit_task (" << RESET << t->task_id << ")"
-//                    << t->cli->name() << " -> " << name()
-//                    << ": after set_stat(task_stat_wait_disk)"
-//                    << endl;
-//        }
-        lck.unlock();
-//        hook->tasks_submited();
-    }
+    rs += t->cost;
+    t->set_stat(task_stat_wait_grp);
+    waitgrp_task.push_back(t);
 }
 
 
@@ -130,14 +90,30 @@ bool server::run_once(long &usecs_guess_wake_up)
 //                << endl;
 //    }
     waitgrp_task.pop_front();
+    
     if ( t->grp->is_failed )
     {
+        ++t->retry_num;
+        t->set_stat(task_stat_net_rcv);
+        rs -= t->cost;
+        lck.unlock();
+        complete_task(t);
+        return true;
+    }
+    if ( !could_rcv(t) )
+    {
+        if ( is_qos_open )
+        {
+            abort();
+        }
+        ++t->retry_num;
+        rs -= t->cost;
         t->set_stat(task_stat_net_rcv);
         lck.unlock();
         complete_task(t);
         return true;
     }
-    
+   
     if ( is_qos_open && !is_fix_quota.get_int() )
     {
         long len = t->cli->ops
@@ -174,7 +150,6 @@ bool server::run_once(long &usecs_guess_wake_up)
 //                    << endl;
 //        }
     }
-
 //    else
 //    {
 //        if ( t->cli->name() == string("c5") )
@@ -185,7 +160,6 @@ bool server::run_once(long &usecs_guess_wake_up)
 //                    << endl;
 //        }
 //    }
-    
     return true;
 }
 

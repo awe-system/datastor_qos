@@ -50,7 +50,7 @@ printtab = [
     ["wait_disk", "disk", tab_func],
     ["complete", "done", tab_func],
     #
-    ["disk_usage", "net_p", tab_func],
+    ["net_usage", "net_p", tab_func],
     ["disk_usage", "disk_p", tab_func],
     ["t_usec", "task_delay", tab2_func],
     ["last_rcvid", "rcvid", fail_tab],
