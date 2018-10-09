@@ -403,10 +403,19 @@ void token_reqgrp_suit_init(test_frame_t *frame)
     
     suit.add_case(&suit, "test_case_init_got", test_case_init_got);
     
-    suit.add_case(&suit, "test_case_init_part_failed", test_case_init_failed);
+    suit.add_case(&suit, "test_case_init_failed", test_case_init_failed);
     
     suit.add_case(&suit, "test_case_init_part_failed",
                   test_case_init_part_failed);
+    
+    frame->add_suit(frame, &suit);
+}
+
+void token_reqgrp_suit_init2(test_frame_t *frame)
+{
+    test_suit_t suit;
+    
+    test_suit_init(&suit, "token_reqgrp_suit_init", test_init, test_clean);
     
     suit.add_case(&suit, "test_case_concurrency_got",
                   test_case_concurrency_got);

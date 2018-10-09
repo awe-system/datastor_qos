@@ -48,6 +48,11 @@ int main(int argc, char *argv[])
     test_frame_exit(&frame);
     
     test_frame_init(&frame);
+    token_reqgrp_suit_init2(&frame);
+    frame.run(&frame);
+    test_frame_exit(&frame);
+    
+    test_frame_init(&frame);
     token_manager_suit_init(&frame);
     frame.run(&frame);
     test_frame_exit(&frame);

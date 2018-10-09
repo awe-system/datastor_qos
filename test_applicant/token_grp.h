@@ -13,4 +13,6 @@
 
 void token_reqgrp_suit_init(test_frame_t *frame);
 
+void token_reqgrp_suit_init2(test_frame_t *frame);
+
 #endif //TEST_QOS_TOKEN_GRP_H
