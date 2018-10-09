@@ -55,7 +55,7 @@ static bool is_first_exist(struct wait_increase_list *q,  app_node_t **node)
 int wait_increase_list_init(wait_increase_list_t *q,
                             unsigned long max_queue_depth)
 {
-    max_queue_depth;
+//    max_queue_depth;
     q->insert        = enqueue;
 //    q->dequeue        = dequeue;
     q->erase          = erase;

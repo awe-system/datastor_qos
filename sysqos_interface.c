@@ -279,7 +279,7 @@ static int alloc_tokens(struct sysqos_dispatcher_ops *ops,
                         resource_t *rs, long *fence_id)
 {
     sysqos_disp_manager_t *manager = manager_by_dispatch(ops);
-    manager->alloc_tokens(manager, rs, fence_id);
+    return manager->alloc_tokens(manager, rs, fence_id);
 }
 
 /*
