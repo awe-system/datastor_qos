@@ -5,10 +5,11 @@
 
 
 #include <test_frame.h>
+#include "sysqos_msg.h"
 #include "wait_token_list.h"
 
 #define TABLE_LEN      128
-#define MAX_NODE_NUM   4096
+//#define MAX_NODE_NUM   4096
 #define TMP_QUEUE_LEN  200
 
 typedef struct token_manager_event

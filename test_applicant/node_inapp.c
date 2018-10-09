@@ -4,8 +4,11 @@
 
 #include <test_frame.h>
 #include "node_inapp.h"
+//#include "sysqos_interface.h"
 
 #define MAX_PERMISSION_NUM_INTEST 16
+#define MIN_RS_NUM_TMP            1
+
 int                    test_version = 0;
 static dispatch_node_t item_static;
 static dispatch_node_t *item        = &item_static;
@@ -39,8 +42,8 @@ test_alloc_permissions(token_reqgrp_t *permissions[], memory_cache_t *percache,
     rs1.rs.id = rs2.rs.id = NULL;
     if ( is_rand )
     {
-        rs1.rs.cost = (rand() % MIN_RS_NUM + MIN_RS_NUM) % MIN_RS_NUM;
-        rs2.rs.cost = (rand() % MIN_RS_NUM + MIN_RS_NUM) % MIN_RS_NUM;
+        rs1.rs.cost = (rand() % MIN_RS_NUM_TMP + MIN_RS_NUM_TMP) % MIN_RS_NUM_TMP;
+        rs2.rs.cost = (rand() % MIN_RS_NUM_TMP + MIN_RS_NUM_TMP) % MIN_RS_NUM_TMP;
     }
     else
     {
@@ -142,7 +145,7 @@ static void test_case_alloc_free_small()
     test_for_permission_item_t test;
     test_for_permission_item_init(&test, false);
     
-    for ( i = 0; i < MIN_RS_NUM / 2; ++i )
+    for ( i = 0; i < MIN_RS_NUM_TMP / 2; ++i )
     {
         token_req_t *rip =
                             app_token_by_grp_list(
@@ -153,7 +156,7 @@ static void test_case_alloc_free_small()
         assert(err == QOS_ERROR_PENDING);
     }
     
-    for ( i = 0; i < MIN_RS_NUM / 2; ++i )
+    for ( i = 0; i < MIN_RS_NUM_TMP / 2; ++i )
     {
         token_req_t *rip =
                             app_token_by_grp_list(
@@ -183,7 +186,7 @@ static void test_case_alloc_free_small()
         assert(list_empty(&got_list));
     } while ( 1 );
     
-    assert(alloc_success == MIN_RS_NUM / 2);
+    assert(alloc_success == MIN_RS_NUM_TMP / 2);
     test_for_permission_item_exit(&test);
     item->reset(item);
     printf("[test_case_alloc_free_small] %s[OK]%s\n", GREEN, RESET);
@@ -475,7 +478,7 @@ test_case_alloc_free_resource_changed()
         }
     }
     alloc_success +=
-            test_try_resource_changed(item, MIN_RS_NUM + 1, test_version++);
+            test_try_resource_changed(item, MIN_RS_NUM_TMP + 1, test_version++);
     alloc_success += test_try_free(item, &test, MAX_PERMISSION_NUM_INTEST * 2);
     item->reset(item);
     assert(alloc_success == MAX_PERMISSION_NUM_INTEST);

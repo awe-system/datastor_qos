@@ -3,7 +3,7 @@
 //
 
 #include <sysqos_app_node.h>
-#include <assert.h>
+//#include <assert.h>
 #include "sysqos_waitincrease_list.h"
 #include "node_indisp.h"
 
@@ -14,7 +14,7 @@ static wait_increase_list_t wait_list;
 static wait_increase_list_t *q       = &wait_list;
 
 
-#define MAX_NODE_NUM 1024
+//#define MAX_NODE_NUM 1024
 
 static int test_init()
 {

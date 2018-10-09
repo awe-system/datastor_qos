@@ -14,11 +14,12 @@ extern "C" {
 /**********************************************************************************/
 //#define GRP_MEMORY_CACHE
 #define MAX_TOKEN_GRP_NUM               100000
-#define MAX_NODE_NUM                    10
+//在demo中将max_node设置为10
+#define MAX_NODE_NUM                    4096
 //resource对象的个数 MAX_TOKEN_GRP_NUM * 条带中条块个数
 #define MAX_RESOURCE_NUM                1000000
 #define NODE_TABLE_HASH_LEN             127UL
-#define MIN_RS_NUM                      100UL
+#define MIN_RS_NUM                      10UL
 #define MMAX_RESPOND_STEP               5UL
 #define UPDATE_INTERVAL                 1000
 /***qos_error.h********************************************************************/

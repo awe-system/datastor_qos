@@ -4,12 +4,13 @@
 
 #include <CUnit/CUnit.h>
 #include <test_frame.h>
+#include "sysqos_msg.h"
 #include "sysqos_test_lib.h"
 #include "base_node.h"
 
 
 #define TABLE_LEN      128
-#define MAX_NODE_NUM   4096
+//#define MAX_NODE_NUM   4096
 #define FIRST_TOTAL    2000
 #define RESOURCE_COST_LIST_NUM 10
 
@@ -59,7 +60,7 @@ static int try_alloc_resource(struct disp_desc_manager *manager, resource_t *rs)
 {
     int  err;
     void *desc = NULL;
-    CU_ASSERT(manager && rs && rs->cost);
+    assert(manager && rs && rs->cost);
     pthread_rwlock_rdlock(&manager->lck);
     err = manager->tab->find(manager->tab, rs->id, &desc);
     if ( err )

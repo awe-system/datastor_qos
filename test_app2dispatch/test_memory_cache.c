@@ -75,7 +75,7 @@ static void test_case_alloc_free()
     threads.run(&threads);
     //    dumps(cache);
 #ifdef CACHE_OPEN_CNT
-    CU_ASSERT(cache.free_cnt == cache.alloc_cnt);
+    assert(cache.free_cnt == cache.alloc_cnt);
 #endif
     test_threads_exit(&threads);
 }

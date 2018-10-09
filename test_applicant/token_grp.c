@@ -5,8 +5,7 @@
 
 #include "token_grp.h"
 
-#define MAX_RESOURCE_NUM             15
-//#define MAX_RESOURCE_PER_PERMISSION  10
+#define MAX_RESOURCE_NUM_TMP             15
 
 static memory_cache_t cache_static;
 static memory_cache_t *cache      = &cache_static;
@@ -32,14 +31,14 @@ static void
 test_case_init_exit(token_reqgrp_t *permission, memory_cache_t *cache)
 {
     int              err = 0;
-    resource_list_t  rs[MAX_RESOURCE_NUM * 2];
+    resource_list_t  rs[MAX_RESOURCE_NUM_TMP * 2];
     struct list_head rs_list;
     
-    _fill_rs_list_head(MAX_RESOURCE_NUM * 2, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP * 2, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err);
     
-    _fill_rs_list_head(MAX_RESOURCE_NUM, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err == 0);
     
@@ -47,7 +46,7 @@ test_case_init_exit(token_reqgrp_t *permission, memory_cache_t *cache)
 #ifdef CACHE_OPEN_CNT
     assert(cache->alloc_cnt == cache->free_cnt);
 #endif
-    _fill_rs_list_head(MAX_RESOURCE_NUM, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err == 0);
     token_reqgrp_exit(permission, cache);
@@ -59,10 +58,10 @@ static void test_case_init_got()
     int              err  = 0;
     struct list_head *pos = NULL;
     struct list_head *tmp = NULL;
-    resource_list_t  rs[MAX_RESOURCE_NUM];
+    resource_list_t  rs[MAX_RESOURCE_NUM_TMP];
     struct list_head rs_list;
     
-    _fill_rs_list_head(MAX_RESOURCE_NUM, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err == 0);
     
@@ -98,10 +97,10 @@ static void test_case_init_failed()
     int              err  = 0;
     struct list_head *pos = NULL;
     struct list_head *tmp = NULL;
-    resource_list_t  rs[MAX_RESOURCE_NUM];
+    resource_list_t  rs[MAX_RESOURCE_NUM_TMP];
     struct list_head rs_list;
     
-    _fill_rs_list_head(MAX_RESOURCE_NUM, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err == 0);
     
@@ -136,10 +135,10 @@ static void test_case_init_part_failed()
     int              i    = 0;
     struct list_head *pos = NULL;
     struct list_head *tmp = NULL;
-    resource_list_t  rs[MAX_RESOURCE_NUM];
+    resource_list_t  rs[MAX_RESOURCE_NUM_TMP];
     struct list_head rs_list;
     
-    _fill_rs_list_head(MAX_RESOURCE_NUM, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err == 0);
     
@@ -228,12 +227,12 @@ static void test_case_concurrency_got()
     int              i    = 0;
     struct list_head *pos = NULL;
     struct list_head *tmp = NULL;
-    resource_list_t  rs[MAX_RESOURCE_NUM];
+    resource_list_t  rs[MAX_RESOURCE_NUM_TMP];
     struct list_head rs_list;
     test_threads_t   threads;
     test_threads_init(&threads);
     
-    _fill_rs_list_head(MAX_RESOURCE_NUM, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err == 0);
     
@@ -271,12 +270,12 @@ static void test_case_concurrency_failed()
     int              i    = 0;
     struct list_head *pos = NULL;
     struct list_head *tmp = NULL;
-    resource_list_t  rs[MAX_RESOURCE_NUM];
+    resource_list_t  rs[MAX_RESOURCE_NUM_TMP];
     struct list_head rs_list;
     test_threads_t   threads;
     test_threads_init(&threads);
     
-    _fill_rs_list_head(MAX_RESOURCE_NUM, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err == 0);
     
@@ -325,12 +324,12 @@ static void test_case_concurrency_got_or_failed()
     int              i    = 0;
     struct list_head *pos = NULL;
     struct list_head *tmp = NULL;
-    resource_list_t  rs[MAX_RESOURCE_NUM];
+    resource_list_t  rs[MAX_RESOURCE_NUM_TMP];
     struct list_head rs_list;
     test_threads_t   threads;
     test_threads_init(&threads);
     
-    _fill_rs_list_head(MAX_RESOURCE_NUM, rs, &rs_list);
+    _fill_rs_list_head(MAX_RESOURCE_NUM_TMP, rs, &rs_list);
     err = token_reqgrp_init(permission, cache, &rs_list, (void *) 123);
     assert(err == 0);
     
@@ -378,10 +377,9 @@ static void test_case_concurrency_got_or_failed()
 static int test_init()
 {
     int err = 0;
-    printf(YELLOW"--------------test_context_init----------------------:\n"RESET);
-    
+    printf(YELLOW"--------------test_init token grp----------------------:\n"RESET);
     err = memory_cache_init(cache, sizeof(struct token_req),
-                            MAX_RESOURCE_NUM);
+                            MAX_RESOURCE_NUM_TMP);
     assert(err == 0);
     printf("[memory_cache_init] %s[OK]%s\n", GREEN, RESET);
     test_case_init_exit(permission, cache);

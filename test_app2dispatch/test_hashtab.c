@@ -88,8 +88,9 @@ void test_case_regular_find()
 #endif
     printf("[test_case_regular_find] %s[OK]%s\n", GREEN, RESET);
 }
-
+#ifndef MIN
 #define MIN(a, b) ((a)<(b)?(a):(b))
+#endif
 
 void *insert_thread_func(void *arg)
 {

@@ -45,8 +45,8 @@
 //    struct token_update_ctx update_ctx;
 //} sysqos_disp_manager_t;
 
-#define MAX_NODE_NUM 4096
-#define UPDATE_INTERVAL 2
+//#define MAX_NODE_NUM 4096
+#define UPDATE_INTERVAL_TMP 1
 #define MAX_TOKEN_NUM   100000
 static sysqos_disp_manager_t manager_static;
 static sysqos_disp_manager_t *manager    = &manager_static;
@@ -290,6 +290,9 @@ static void test_case_press_update()
     a2d.version = 2;
     test_rcvd(&a2d);
     check_quota();
+    a2d.version = 3;
+    test_rcvd(&a2d);
+    check_quota();
     alloc_min_success();
     check_quota();
     alloc_min_success();
@@ -366,14 +369,14 @@ static int test_init()
 {
     int err;
     err = sysqos_disp_manager_init(manager, NODE_TABLE_HASH_LEN, MAX_NODE_NUM,
-                                   UPDATE_INTERVAL, MIN_RS_NUM);
+                                   UPDATE_INTERVAL_TMP, MIN_RS_NUM);
     assert(err == QOS_ERROR_OK);
     manager->set_msg_ops(manager, &ops);
     
     sysqos_disp_manager_exit(manager);
     
     err = sysqos_disp_manager_init(manager, NODE_TABLE_HASH_LEN, MAX_NODE_NUM,
-                                   UPDATE_INTERVAL, MIN_RS_NUM);
+                                   UPDATE_INTERVAL_TMP, MIN_RS_NUM);
     assert(err == QOS_ERROR_OK);
     manager->set_msg_ops(manager, &ops);
     manager->resource_increase(manager, MAX_TOKEN_NUM);
