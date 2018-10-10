@@ -45,7 +45,7 @@ typedef struct safe_rw_list
     memory_cache_t  *cache;
     
     struct list_head list;
-    pthread_rwlock_t rwlock;
+    sysqos_rwlock_t rwlock;
 } safe_rw_list_t;
 
 int safe_rw_list_init(safe_rw_list_t *list, memory_cache_t *item_cache);

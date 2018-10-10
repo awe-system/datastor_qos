@@ -41,7 +41,7 @@ typedef struct token_manager
     token_manager_event_t *event_to_permission;
     memory_cache_t        cache;
     hash_table_t          *tokens;
-    pthread_rwlock_t      lck;
+    sysqos_rwlock_t      lck;
 } token_manager_t;
 
 
@@ -61,9 +61,9 @@ static void node_online(struct msg_event_ops *ops, void *id)
     nodereq_list_t *tokens = manager->cache.alloc(&manager->cache);
     assert(tokens);
     nodereq_list_init(tokens);
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     err = manager->tokens->insert(manager->tokens, id, tokens);
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
     if ( err )
     {
         nodereq_list_exit(tokens);
@@ -77,9 +77,9 @@ static void node_offline(struct msg_event_ops *ops, void *id)
     void            *tokens  = NULL;
     int             err;
     assert(manager->event_to_permission);
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     err = manager->tokens->erase(manager->tokens, id, &tokens);
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
     if ( err == 0 && tokens )
     {
         struct list_head head;
@@ -96,7 +96,7 @@ static int tpush_back(struct token_manager *manager, resource_list_t *rs)
 {
     int  err;
     void *tokens = NULL;
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     do
     {
         err = manager->tokens->find(manager->tokens, rs->rs.id, &tokens);
@@ -104,7 +104,7 @@ static int tpush_back(struct token_manager *manager, resource_list_t *rs)
         { break; }
         ((nodereq_list_t *) tokens)->push_back((nodereq_list_t *) tokens, rs);
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return err;
 }
 
@@ -112,7 +112,7 @@ static int terase(struct token_manager *manager, resource_list_t *rs)
 {
     int  err;
     void *tokens = NULL;
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     do
     {
         err = manager->tokens->find(manager->tokens, rs->rs.id, &tokens);
@@ -120,7 +120,7 @@ static int terase(struct token_manager *manager, resource_list_t *rs)
         { break; }
         err = ((nodereq_list_t *) tokens)->erase((nodereq_list_t *) tokens, rs);
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return err;
 }
 
@@ -129,7 +129,7 @@ static resource_list_t *tfront(struct token_manager *manager, void *id)
     int             err;
     resource_list_t *rs     = NULL;
     void            *tokens = NULL;
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     do
     {
         err = manager->tokens->find(manager->tokens, id, &tokens);
@@ -137,7 +137,7 @@ static resource_list_t *tfront(struct token_manager *manager, void *id)
         { break; }
         rs = ((nodereq_list_t *) tokens)->front((nodereq_list_t *) tokens);
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return rs;
 }
 
@@ -145,7 +145,7 @@ static void tpop_front(struct token_manager *manager, void *id)
 {
     int  err;
     void *tokens = NULL;
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     do
     {
         err = manager->tokens->find(manager->tokens, id, &tokens);
@@ -153,7 +153,7 @@ static void tpop_front(struct token_manager *manager, void *id)
         { break; }
         ((nodereq_list_t *) tokens)->pop_front((nodereq_list_t *) tokens);
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
 }
 
 static press_t tget_press(struct token_manager *manager, void *id)
@@ -162,7 +162,7 @@ static press_t tget_press(struct token_manager *manager, void *id)
     press_t press;
     press.val = 0;
     void *tokens = NULL;
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     do
     {
         err = manager->tokens->find(manager->tokens, id, &tokens);
@@ -171,7 +171,7 @@ static press_t tget_press(struct token_manager *manager, void *id)
         press = ((nodereq_list_t *) tokens)
                 ->get_press((nodereq_list_t *) tokens);
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return press;
 }
 
@@ -200,7 +200,7 @@ static int token_manager_init(token_manager_t *manager,
     if ( !manager->tokens )
         end_func(err, QOS_ERROR_MEMORY, alloc_hash_table_failed);
     
-    err = pthread_rwlock_init(&manager->lck, NULL);
+    err = sysqos_rwlock_init(&manager->lck);
     if ( err ) end_func(err, QOS_ERROR_MEMORY, pthread_rwlock_init_failed);
     
     manager->event_to_permission = event;
@@ -215,7 +215,7 @@ static int token_manager_init(token_manager_t *manager,
     manager->erase               = terase;
     
     return QOS_ERROR_OK;
-//    pthread_rwlock_destroy(&manager->lck);
+//    sysqos_rwlock_destroy(&manager->lck);
 pthread_rwlock_init_failed:
     free_hash_table(manager->tokens);
 alloc_hash_table_failed:
@@ -227,7 +227,7 @@ memory_cache_init_failed:
 static void token_manager_exit(token_manager_t *manager)
 {
     assert(manager && manager->tokens);
-    pthread_rwlock_destroy(&manager->lck);
+    sysqos_rwlock_destroy(&manager->lck);
     free_hash_table(manager->tokens);
     memory_cache_exit(&manager->cache);
 }

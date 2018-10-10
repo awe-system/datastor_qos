@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <stdbool.h>
+#include "sysqos_type.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,7 +96,7 @@ typedef struct test_map
     bool *in_tab;
     bool *out_tab;
     unsigned long    *lock_tab;
-    pthread_rwlock_t lck;
+    sysqos_rwlock_t lck;
 } test_map_t;
 
 void test_map_init(test_map_t *tm, unsigned long max_key_num);

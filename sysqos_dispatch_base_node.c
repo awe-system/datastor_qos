@@ -11,24 +11,24 @@
 static inline bool is_to_reset(dispatch_base_node_t *desc, long new_ver)
 {
     bool is_reset = false;
-    pthread_rwlock_rdlock(&desc->lck);
+    sysqos_rwlock_rdlock(&desc->lck);
     if ( new_ver < desc->version )
     {
         is_reset = true;
     }
-    pthread_rwlock_unlock(&desc->lck);
+    sysqos_rwlock_rdunlock(&desc->lck);
     return is_reset;
 }
 
 static inline bool is_version_same(dispatch_base_node_t *desc, long new_ver)
 {
     bool is_same = false;
-    pthread_rwlock_rdlock(&desc->lck);
+    sysqos_rwlock_rdlock(&desc->lck);
     if ( new_ver - desc->version == 0 )
     {
         is_same = true;
     }
-    pthread_rwlock_unlock(&desc->lck);
+    sysqos_rwlock_rdunlock(&desc->lck);
     return is_same;
 }
 
@@ -104,7 +104,7 @@ static bool check_update_total_version(dispatch_base_node_t *base_node,
         return false;
     }
     
-    pthread_rwlock_wrlock(&base_node->lck);
+    sysqos_rwlock_wrlock(&base_node->lck);
     if ( new_ver - base_node->version > 0 )
     {
         if ( base_node->token_quota < new_total )
@@ -122,20 +122,20 @@ static bool check_update_total_version(dispatch_base_node_t *base_node,
         }
         base_node->version = new_ver;
     }
-    pthread_rwlock_unlock(&base_node->lck);
+    sysqos_rwlock_wrunlock(&base_node->lck);
     
     return is_resource_increased;
 }
 
 static int check_alloc_from_base(dispatch_base_node_t *desc, long cost)
 {
-    pthread_rwlock_rdlock(&desc->lck);
+    sysqos_rwlock_rdlock(&desc->lck);
     if ( cost + desc->token_inuse > desc->token_quota_target )
     {
-        pthread_rwlock_unlock(&desc->lck);
+        sysqos_rwlock_rdunlock(&desc->lck);
         return QOS_ERROR_PENDING;
     }
-    pthread_rwlock_unlock(&desc->lck);
+    sysqos_rwlock_rdunlock(&desc->lck);
     return QOS_ERROR_OK;
 }
 
@@ -148,7 +148,7 @@ static int try_alloc_from_desc(dispatch_base_node_t *desc, long cost)
         return err;
     }
     
-    pthread_rwlock_wrlock(&desc->lck);
+    sysqos_rwlock_wrlock(&desc->lck);
     if ( cost + desc->token_inuse <= desc->token_quota_target )
     {
         update_quota_target_force(desc);
@@ -156,7 +156,7 @@ static int try_alloc_from_desc(dispatch_base_node_t *desc, long cost)
 //        printf(BLUE"try_alloc_from_desc cost = %li token_inuse = %lu\n", cost,
 //               desc->token_inuse);
     }
-    pthread_rwlock_unlock(&desc->lck);
+    sysqos_rwlock_wrunlock(&desc->lck);
     return QOS_ERROR_OK;
 }
 
@@ -164,7 +164,7 @@ static int try_alloc_from_desc(dispatch_base_node_t *desc, long cost)
 static bool free_to_base(dispatch_base_node_t *desc, long cost)
 {
     bool could_alloc = false;
-    pthread_rwlock_wrlock(&desc->lck);
+    sysqos_rwlock_wrlock(&desc->lck);
     assert(desc->token_inuse >= cost);
     desc->token_inuse -= cost;
 //    printf(RED"free_to_base cost = %li token_inuse = %lu\n", cost,
@@ -181,16 +181,16 @@ static bool free_to_base(dispatch_base_node_t *desc, long cost)
     {
         could_alloc = true;
     }
-    pthread_rwlock_unlock(&desc->lck);
+    sysqos_rwlock_wrunlock(&desc->lck);
     return could_alloc;
 }
 
 static long get_currentversion(dispatch_base_node_t *desc)
 {
     long res = 0;
-    pthread_rwlock_rdlock(&desc->lck);
+    sysqos_rwlock_rdlock(&desc->lck);
     res = desc->version;
-    pthread_rwlock_unlock(&desc->lck);
+    sysqos_rwlock_rdunlock(&desc->lck);
     return res;
 }
 
@@ -198,20 +198,20 @@ static long get_currentversion(dispatch_base_node_t *desc)
 static unsigned long get_alloced(dispatch_base_node_t *desc)
 {
     unsigned long res = 0;
-    pthread_rwlock_rdlock(&desc->lck);
+    sysqos_rwlock_rdlock(&desc->lck);
     res = desc->token_inuse;
-    pthread_rwlock_unlock(&desc->lck);
+    sysqos_rwlock_rdunlock(&desc->lck);
     return res;
 }
 
 static void reset(struct dispatch_base_node *desc)
 {
-    pthread_rwlock_wrlock(&desc->lck);
+    sysqos_rwlock_wrlock(&desc->lck);
     desc->token_quota        = MIN_RS_NUM;
     desc->token_quota_target = MIN_RS_NUM;
     desc->token_quota_new    = MIN_RS_NUM;
     desc->version            = 0;
-    pthread_rwlock_unlock(&desc->lck);
+    sysqos_rwlock_wrunlock(&desc->lck);
 }
 
 int dispatch_base_node_init(dispatch_base_node_t *base_node)
@@ -229,12 +229,12 @@ int dispatch_base_node_init(dispatch_base_node_t *base_node)
     base_node->try_alloc_from_base        = try_alloc_from_desc;
     base_node->check_update_quota_version = check_update_total_version;
     base_node->reset                      = reset;
-    return pthread_rwlock_init(&base_node->lck, NULL);
+    return sysqos_rwlock_init(&base_node->lck);
 }
 
 void dispatch_base_node_exit(dispatch_base_node_t *base_node)
 {
-    pthread_rwlock_destroy(&base_node->lck);
+    sysqos_rwlock_destroy(&base_node->lck);
 }
 
 //
@@ -244,7 +244,7 @@ void dispatch_base_node_exit(dispatch_base_node_t *base_node)
 //    int  err   = QOS_ERROR_OK;
 //    void *desc = NULL;
 //    assert(manager && rs && rs->cost);
-//    pthread_rwlock_rdlock(&manager->lck);
+//    sysqos_rwlock_rdlock(&manager->lck);
 //    err = manager->tab->find(manager->tab, rs->id, &desc);
 //    if ( err )
 //        end_func(err, QOS_ERROR_FAILEDNODE, unlock_manager);
@@ -254,6 +254,6 @@ void dispatch_base_node_exit(dispatch_base_node_t *base_node)
 //    if ( err )
 //        end_func(err, QOS_ERROR_PENDING, unlock_manager);
 //unlock_manager:
-//    pthread_rwlock_unlock(&manager->lck);
+//    sysqos_rwlock_rdunlock(&manager->lck);
 //    return err;
 //}

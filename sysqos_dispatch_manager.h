@@ -48,7 +48,7 @@ typedef struct sysqos_disp_manager
     
     hash_table_t       *tab;
     memory_cache_t     token_node_cache;
-    pthread_rwlock_t   lck;
+    sysqos_rwlock_t   lck;
     unsigned long      default_token_min;
     unsigned long      fence_id;
     count_controller_t cnt_controller;

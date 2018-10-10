@@ -20,7 +20,7 @@ typedef struct dispatch_base_node
     unsigned long    token_quota_new;
     unsigned long    respond_step;
     long             version;
-    pthread_rwlock_t lck;
+    sysqos_rwlock_t lck;
     
     int (*check_alloc_from_base)(struct dispatch_base_node *desc, long cost);
     

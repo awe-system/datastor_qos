@@ -147,7 +147,7 @@ static void node_online(struct msg_event_ops *ops, void *id)
     atd.press.val = 0;
     atd.version   = 0;
     
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     do
     {
         err = manager->app_node_table
@@ -159,7 +159,7 @@ static void node_online(struct msg_event_ops *ops, void *id)
         //        item->get_protocol(item,&atd);
         //        assert(atd_len == sizeof(atd));
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
     if ( err )
     {
         goto insert_failed;
@@ -184,7 +184,7 @@ static void node_offline(struct msg_event_ops *ops, void *id)
     struct list_head relative_token_grps;
     LISTHEAD_INIT(&relative_token_grps);
     
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     do
     {
         err = manager->app_node_table->find(manager->app_node_table, id, &item);
@@ -199,7 +199,7 @@ static void node_offline(struct msg_event_ops *ops, void *id)
                 ->erase(manager->app_node_table, id, &item);
         assert(err == 0);
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
     if ( err == 0 )
     {
         dispatch_node_exit(item);
@@ -213,7 +213,7 @@ static void node_reset(struct msg_event_ops *ops, void *id)
     token_reqgrp_manager_t *manager = token_grp_manager_by_msg_event(ops);
     void                   *item    = NULL;
     int                    err;
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     do
     {
         err = manager->app_node_table->find(manager->app_node_table, id, &item);
@@ -224,7 +224,7 @@ static void node_reset(struct msg_event_ops *ops, void *id)
         ((dispatch_node_t *) item)
                 ->reset((dispatch_node_t *) item);
     } while ( 0 );
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
 }
 
 #define RCVD_FAIL_TIMES 2
@@ -245,7 +245,7 @@ static void rcvd(struct msg_event_ops *ops,
     memcpy(&dta, buf, (size_t) len);
     do
     {
-        pthread_rwlock_wrlock(&manager->lck);
+        sysqos_rwlock_wrlock(&manager->lck);
         do
         {
             err = manager->app_node_table
@@ -257,7 +257,7 @@ static void rcvd(struct msg_event_ops *ops,
             is_reset = ((dispatch_node_t *) item)
                     ->resource_changed(item, &dta, &relative_token_grps);
         } while ( 0 );
-        pthread_rwlock_unlock(&manager->lck);
+        sysqos_rwlock_wrunlock(&manager->lck);
         
         if ( err && --err_cnt > 0 )
         {
@@ -329,9 +329,9 @@ static int get_token_grp(struct token_reqgrp_manager *manager,
     
     check_node_in_when_get(manager, &head);
     
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     err = try_to_get_tokens(manager, *pp_token_grp);
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
     
     
     if ( err && err != QOS_ERROR_PENDING )
@@ -391,9 +391,9 @@ static void put_token_grp(struct token_reqgrp_manager *manager,
     }
     check_node_out_when_put(manager, &fail_head);
     
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     try_to_put_tokens(manager, p_token_grp, &relative_token_grp_list);
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
     
     token_reqgrp_exit(p_token_grp, &manager->resource_cache);
 #ifdef GRP_MEMORY_CACHE
@@ -423,7 +423,7 @@ static int snd_msg_buf(struct msg_event_ops *ops, void *id,
     
     assert(ops && len == sizeof(app2dispatch_t) && buf);
     
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     err = manager->app_node_table->find(manager->app_node_table, id, &item);
     if ( err )
         end_func(err, QOS_ERROR_FAILEDNODE, find_failed);
@@ -432,7 +432,7 @@ static int snd_msg_buf(struct msg_event_ops *ops, void *id,
     memcpy(buf, &atd, (size_t) len);
 
 find_failed:
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return err;
 }
 
@@ -475,7 +475,7 @@ int token_reqgrp_manager_init(token_reqgrp_manager_t *manager, int tab_len,
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, resource_in_permission_init_failed);
     
-    err = pthread_rwlock_init(&manager->lck, NULL);
+    err =  sysqos_rwlock_init(&manager->lck);
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, rwlock_init_failed);
     manager->get_token_reqgrp  = get_token_grp;
@@ -493,7 +493,7 @@ int token_reqgrp_manager_init(token_reqgrp_manager_t *manager, int tab_len,
     manager->version = 0;
     
     return err;
-//    pthread_rwlock_destroy(&manager->lck);
+//    sysqos_rwlock_destroy(&manager->lck);
 rwlock_init_failed:
     memory_cache_exit(&manager->resource_cache);
 resource_in_permission_init_failed:
@@ -508,7 +508,7 @@ alloc_hash_table_failed:
 
 void token_reqgrp_manager_exit(token_reqgrp_manager_t *manager)
 {
-    pthread_rwlock_destroy(&manager->lck);
+    sysqos_rwlock_destroy(&manager->lck);
     memory_cache_exit(&manager->resource_cache);
     memory_cache_exit(&manager->token_grp_cache);
     memory_cache_exit(&manager->manager_item_cache);

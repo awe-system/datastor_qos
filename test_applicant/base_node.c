@@ -28,7 +28,7 @@ typedef struct disp_desc_manager
     hash_table_t              *tab;
     memory_cache_t            cache;
     disp_desc_manager_event_t *event_to_permission;
-    pthread_rwlock_t          lck;
+    sysqos_rwlock_t          lck;
     /******************************************************************************/
     msg_event_ops_t           msg_event;//NOTE:此对象之实现online,offline,rcvd
 //
@@ -61,7 +61,7 @@ static int try_alloc_resource(struct disp_desc_manager *manager, resource_t *rs)
     int  err;
     void *desc = NULL;
     assert(manager && rs && rs->cost);
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     err = manager->tab->find(manager->tab, rs->id, &desc);
     if ( err )
         end_func(err, QOS_ERROR_FAILEDNODE, unlock_manager);
@@ -71,7 +71,7 @@ static int try_alloc_resource(struct disp_desc_manager *manager, resource_t *rs)
     if ( err )
         end_func(err, QOS_ERROR_PENDING, unlock_manager);
 unlock_manager:
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return err;
 }
 
@@ -82,7 +82,7 @@ static int free_resource(struct disp_desc_manager *manager,
     int  err;
     void *desc = NULL;
     assert(manager && rs && rs->cost);
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     err = manager->tab->find(manager->tab, rs->id, &desc);
     if ( err )
         end_func(err, QOS_ERROR_FAILEDNODE, unlock_manager);
@@ -90,7 +90,7 @@ static int free_resource(struct disp_desc_manager *manager,
     *could_alloc = ((dispatch_base_node_t *) desc)->free_to_base(desc,
                                                                  rs->cost);
 unlock_manager:
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return err;
 }
 
@@ -101,14 +101,14 @@ get_currentversion_m(struct disp_desc_manager *manager, void *id)
     long ver = 0;
     void *desc;
     assert(manager != NULL);
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     err = manager->tab->find(manager->tab, id, &desc);
     if ( !err )
     {
         assert(desc != NULL);
         ver = ((dispatch_base_node_t *) desc)->get_version(desc);
     }
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return ver;
 }
 
@@ -146,9 +146,9 @@ static void node_online(struct msg_event_ops *ops, void *id)
     assert(desc != NULL);
     err = dispatch_base_node_init(desc);
     assert(err == 0);
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     err = manager->tab->insert(manager->tab, id, desc);
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
     if ( err )
     {
         dispatch_base_node_exit(desc);
@@ -161,13 +161,13 @@ static void node_reset(struct msg_event_ops *ops, void *id)
     disp_desc_manager_t *manager = disp_desc_manager_by_msg_event(ops);
     void                *desc    = NULL;
     int                 err;
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     err = manager->tab->find(manager->tab, id, &desc);
     if ( !err )
     {
         ((dispatch_base_node_t *) desc)->reset((dispatch_base_node_t *) desc);
     }
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
 }
 
 static void node_offline(struct msg_event_ops *ops, void *id)
@@ -175,9 +175,9 @@ static void node_offline(struct msg_event_ops *ops, void *id)
     disp_desc_manager_t *manager = disp_desc_manager_by_msg_event(ops);
     void                *desc    = NULL;
     int                 err;
-    pthread_rwlock_wrlock(&manager->lck);
+    sysqos_rwlock_wrlock(&manager->lck);
     err = manager->tab->erase(manager->tab, id, &desc);
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_wrunlock(&manager->lck);
     if ( err == 0 && desc )
     {
         dispatch_base_node_exit((dispatch_base_node_t *) desc);
@@ -198,7 +198,7 @@ static void rcvd(struct msg_event_ops *ops, void *id,
     memcpy(&app, buf, (size_t)len);
     
     void *desc;
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     int err = manager->tab->find(manager->tab, id, &desc);
     if ( !err )
     {
@@ -208,7 +208,7 @@ static void rcvd(struct msg_event_ops *ops, void *id,
                         (unsigned long) app.token_quota,
                         app.version, &is_reset);
     }
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     if ( is_reset )
     {
         ops->node_reset(ops, id);
@@ -234,7 +234,7 @@ static int disp_desc_manager_init(disp_desc_manager_t *manager, int tab_len,
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, memory_cache_init_failed);
     
-    err = pthread_rwlock_init(&manager->lck, NULL);
+    err = sysqos_rwlock_init(&manager->lck);
     if ( err )
         end_func(err, QOS_ERROR_MEMORY, rwlock_init_failed);
     
@@ -253,7 +253,7 @@ static int disp_desc_manager_init(disp_desc_manager_t *manager, int tab_len,
     manager->get_currentversion = get_currentversion_m;
     
     return QOS_ERROR_OK;
-//    pthread_rwlock_destroy(&manager->lck);
+//    sysqos_rwlock_destroy(&manager->lck);
 rwlock_init_failed:
     memory_cache_exit(&manager->cache);
 memory_cache_init_failed:
@@ -265,7 +265,7 @@ alloc_hash_table_failed:
 static void disp_desc_manager_exit(disp_desc_manager_t *manager)
 {
     assert(manager && manager->tab);
-    pthread_rwlock_destroy(&manager->lck);
+    sysqos_rwlock_destroy(&manager->lck);
     memory_cache_exit(&manager->cache);
     free_hash_table(manager->tab);
 }
@@ -800,7 +800,7 @@ check_alloc_resource(struct disp_desc_manager *manager, resource_t *rs)
     int  err;
     void *desc = NULL;
     assert(manager && rs && rs->cost);
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     err = manager->tab->find(manager->tab, rs->id, &desc);
     if ( err )
         end_func(err, QOS_ERROR_FAILEDNODE, unlock_manager);
@@ -811,7 +811,7 @@ check_alloc_resource(struct disp_desc_manager *manager, resource_t *rs)
     if ( err )
         end_func(err, QOS_ERROR_PENDING, unlock_manager);
 unlock_manager:
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
     return err;
 }
 

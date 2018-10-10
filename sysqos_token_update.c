@@ -17,14 +17,14 @@ insert_by_weight(struct token_update_ctx *ctx, update_node_t *updatenode)
 static void add_resource(struct token_update_ctx *ctx, app_node_t *node)
 {
     update_node_t *updatenode = NULL;
-    pthread_rwlock_wrlock(&ctx->lck);
+    sysqos_rwlock_wrlock(&ctx->lck);
     updatenode = node->init_update_node(node);
     assert(updatenode);
     insert_by_weight(ctx, updatenode);
     ctx->token_total += updatenode->tmp_token_quota;
     ctx->token_static += updatenode->token_base;
     updatenode->tmp_token_quota -= updatenode->token_base;
-    pthread_rwlock_unlock(&ctx->lck);
+    sysqos_rwlock_wrunlock(&ctx->lck);
 }
 
 static inline unsigned long update_token_left_base(struct token_update_ctx *ctx)
@@ -83,11 +83,11 @@ static unsigned long update_node_quota_left(struct list_head *pos,
 
 static void clear(struct token_update_ctx *ctx)
 {
-    pthread_rwlock_wrlock(&ctx->lck);
+    sysqos_rwlock_wrlock(&ctx->lck);
     ctx->total_weight = 0;
     ctx->token_total  = ctx->token_static = 0;
     LISTHEAD_INIT(&ctx->lhead_update_node);
-    pthread_rwlock_unlock(&ctx->lck);
+    sysqos_rwlock_wrunlock(&ctx->lck);
 }
 
 static void update(struct token_update_ctx *ctx,
@@ -159,11 +159,11 @@ int token_update_ctx_init(token_update_ctx_t *ctx/*,
     
     token_update_init_func(ctx);
     
-    return pthread_rwlock_init(&ctx->lck, NULL);
+    return sysqos_rwlock_init(&ctx->lck);
     
 }
 
 void token_update_ctx_exit(token_update_ctx_t *ctx)
 {
-    pthread_rwlock_destroy(&ctx->lck);
+    sysqos_rwlock_destroy(&ctx->lck);
 }

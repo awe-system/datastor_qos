@@ -14,14 +14,14 @@ void sysqos_dump_app(sysqos_applicant_ops_t *ops, void *disp_id,
     dispatch_node_t        *node;
     token_reqgrp_manager_t *manager = manager_by_applicant(ops);
     memset(info, 0, sizeof(sysqos_app_dump_info_t));
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     err = manager->app_node_table->find(manager->app_node_table, disp_id,
                                         (void **) &node);
     if ( err )
         end_func(err, QOS_ERROR_FAILEDNODE, find_failed);
     
     sysqos_spin_lock(&node->lck);
-    pthread_rwlock_rdlock(&node->base_node.lck);
+    sysqos_rwlock_rdlock(&node->base_node.lck);
     info->token_quota        = node->base_node.token_quota;
     info->token_quota_new    = node->base_node.token_quota_new;
     info->version            = node->base_node.version;
@@ -29,11 +29,11 @@ void sysqos_dump_app(sysqos_applicant_ops_t *ops, void *disp_id,
     info->token_quota_target = node->base_node.token_quota_target;
     info->respond_step       = node->base_node.respond_step;
     info->press              = node->lhead_nodereq.press;
-    pthread_rwlock_unlock(&node->base_node.lck);
+    sysqos_rwlock_rdunlock(&node->base_node.lck);
     sysqos_spin_unlock(&node->lck);
 
 find_failed:
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
 }
 
 void sysqos_dump_disp(sysqos_dispatcher_ops_t *ops, void *app_id,
@@ -43,7 +43,7 @@ void sysqos_dump_disp(sysqos_dispatcher_ops_t *ops, void *app_id,
     app_node_t *node;
     memset(info, 0, sizeof(sysqos_disp_dump_info_t));
     sysqos_disp_manager_t *manager = manager_by_dispatch(ops);
-    pthread_rwlock_rdlock(&manager->lck);
+    sysqos_rwlock_rdlock(&manager->lck);
     sysqos_spin_lock(&manager->tokens.lck);
     info->token_used_static = manager->tokens.token_used_static;
     info->token_dynamic     = manager->tokens.token_dynamic;
@@ -59,5 +59,5 @@ void sysqos_dump_disp(sysqos_dispatcher_ops_t *ops, void *app_id,
     info->press           = node->press;
     sysqos_spin_unlock(&node->lck);
 find_failed:
-    pthread_rwlock_unlock(&manager->lck);
+    sysqos_rwlock_rdunlock(&manager->lck);
 }

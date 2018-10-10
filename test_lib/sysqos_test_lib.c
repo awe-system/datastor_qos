@@ -6,6 +6,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <sysqos_type.h>
 #include "sysqos_test_lib.h"
 #include "sysqos_alloc.h"
 
@@ -88,7 +89,7 @@ static void test_try_get_items_erase(struct test_map *tm,
     unsigned long i = 0, j = 0;
     assert(max_pair_num && *max_pair_num);
     
-    pthread_rwlock_wrlock(&tm->lck);
+    sysqos_rwlock_wrlock(&tm->lck);
     for ( i = 0, j = 0; i < tm->max_key_num && j < *max_pair_num; ++i )
     {
         if ( tm->in_tab[i] && !tm->lock_tab[i] )
@@ -99,7 +100,7 @@ static void test_try_get_items_erase(struct test_map *tm,
             ++j;
         }
     }
-    pthread_rwlock_unlock(&tm->lck);
+    sysqos_rwlock_wrunlock(&tm->lck);
     *max_pair_num = j;
 }
 
@@ -110,12 +111,12 @@ static void test_complete_erase(struct test_map *tm,
     unsigned long i = 0;
     assert(pair_num);
     
-    pthread_rwlock_wrlock(&tm->lck);
+    sysqos_rwlock_wrlock(&tm->lck);
     for ( i = 0; i < pair_num; ++i )
     {
         tm->out_tab[pairs[i].key] = true;
     }
-    pthread_rwlock_unlock(&tm->lck);
+    sysqos_rwlock_wrunlock(&tm->lck);
     
 }
 
@@ -126,7 +127,7 @@ static void test_try_get_items_insert(struct test_map *tm, INOUT
     unsigned long i = 0, j = 0;
     assert(max_pair_num && *max_pair_num);
     
-    pthread_rwlock_wrlock(&tm->lck);
+    sysqos_rwlock_wrlock(&tm->lck);
     for ( i = 0, j = 0; i < tm->max_key_num && j < *max_pair_num; ++i )
     {
         if ( tm->out_tab[i] )
@@ -137,7 +138,7 @@ static void test_try_get_items_insert(struct test_map *tm, INOUT
             ++j;
         }
     }
-    pthread_rwlock_unlock(&tm->lck);
+    sysqos_rwlock_wrunlock(&tm->lck);
     *max_pair_num = j;
 }
 
@@ -148,12 +149,12 @@ static void test_complete_insert(struct test_map *tm,
     unsigned long i = 0;
     assert(pair_num);
     
-    pthread_rwlock_wrlock(&tm->lck);
+    sysqos_rwlock_wrlock(&tm->lck);
     for ( i = 0; i < pair_num; ++i )
     {
         tm->in_tab[pairs[i].key] = true;
     }
-    pthread_rwlock_unlock(&tm->lck);
+    sysqos_rwlock_wrunlock(&tm->lck);
 }
 
 
@@ -164,7 +165,7 @@ static void test_try_find_items_lock_erase(struct test_map *tm, INOUT
     unsigned long i = 0, j = 0;
     assert(max_pair_num && *max_pair_num);
     
-    pthread_rwlock_wrlock(&tm->lck);
+    sysqos_rwlock_wrlock(&tm->lck);
     for ( i = 0, j = 0; i < tm->max_key_num && j < *max_pair_num; ++i )
     {
         if ( tm->in_tab[i] )
@@ -176,7 +177,7 @@ static void test_try_find_items_lock_erase(struct test_map *tm, INOUT
             ++j;
         }
     }
-    pthread_rwlock_unlock(&tm->lck);
+    sysqos_rwlock_wrunlock(&tm->lck);
     *max_pair_num = j;
 }
 //
@@ -187,7 +188,7 @@ static void test_try_find_items_lock_erase(struct test_map *tm, INOUT
 //    unsigned long i = 0, j = 0;
 //    assert(max_pair_num && *max_pair_num);
 //
-//    pthread_rwlock_wrlock(&tm->lck);
+//    sysqos_rwlock_wrlock(&tm->lck);
 //    for ( i = 0, j = 0; i < tm->max_key_num && j < *max_pair_num; ++i )
 //    {
 //        if ( tm->in_tab[i] && !tm->lock_tab[i] )
@@ -199,7 +200,7 @@ static void test_try_find_items_lock_erase(struct test_map *tm, INOUT
 //            ++j;
 //        }
 //    }
-//    pthread_rwlock_unlock(&tm->lck);
+//    sysqos_rwlock_wrunlock(&tm->lck);
 //    *max_pair_num = j;
 //}
 
@@ -209,12 +210,12 @@ static void test_unlock_erase(struct test_map *tm, IN unsigned long pair_num, IN
 {
     unsigned long i = 0;
     assert(pair_num);
-    pthread_rwlock_wrlock(&tm->lck);
+    sysqos_rwlock_wrlock(&tm->lck);
     for ( i = 0; i < pair_num; ++i )
     {
         --tm->lock_tab[pairs[i].key];
     }
-    pthread_rwlock_unlock(&tm->lck);
+    sysqos_rwlock_wrunlock(&tm->lck);
 }
 
 static void fill_random_array(unsigned long a[], unsigned long num)
@@ -265,7 +266,7 @@ void test_map_init(test_map_t *tm, unsigned long max_key_num)
     memset(tm->lock_tab, 0, sizeof(bool) * max_key_num);
     
     
-    assert(0 == pthread_rwlock_init(&tm->lck, NULL));
+    assert(0 == sysqos_rwlock_init(&tm->lck));
     
     tm->try_get_items_erase         = test_try_get_items_erase;
     tm->complete_erase              = test_complete_erase;
@@ -281,7 +282,7 @@ void test_map_init(test_map_t *tm, unsigned long max_key_num)
 
 void test_map_exit(test_map_t *tm)
 {
-    pthread_rwlock_destroy(&tm->lck);
+    sysqos_rwlock_destroy(&tm->lck);
     qos_free(tm->vals);
     qos_free(tm->in_tab);
     qos_free(tm->out_tab);

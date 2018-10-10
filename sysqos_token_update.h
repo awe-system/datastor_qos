@@ -28,7 +28,7 @@ typedef struct token_update_ctx
 //    unsigned long    max_token_once;
 //    int              rebalance_ratio;
     struct list_head lhead_update_node;
-    pthread_rwlock_t lck;
+    sysqos_rwlock_t lck;
     
     /**public*****************************************/
     void (*add_resource)(struct token_update_ctx *ctx, app_node_t *node);

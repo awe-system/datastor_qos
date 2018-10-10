@@ -16,7 +16,7 @@ typedef struct nodereq_list
 {
     unsigned long    press;//token_list里所有等待资源的总和
     struct list_head token_list;
-    pthread_rwlock_t lck;
+    sysqos_rwlock_t lck;
     
     /********************************************/
     press_t (*get_press)(struct nodereq_list *tokens);
